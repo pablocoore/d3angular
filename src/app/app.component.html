@@ -1,0 +1,14 @@
+<h1>Charts</h1>
+<div style="width:800px;">
+    <app-bar-chart *ngIf="chartData" [data]="chartData"></app-bar-chart>
+</div>
+
+
+<div style="width:800px">
+    <app-stacked-bar-chart *ngIf="stackedChartData" [data]="stackedChartData" (data-click)="mostrarClick($event)" [x]="x_attr"></app-stacked-bar-chart>
+</div>
+
+
+<div style="width:800px">
+    <app-stacked-bar-chart *ngIf="stackedChartData2" [data]="stackedChartData2" (data-click)="mostrarClick($event)" [x]="x_attr"></app-stacked-bar-chart>
+</div>
