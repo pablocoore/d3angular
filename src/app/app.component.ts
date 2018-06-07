@@ -8,29 +8,30 @@ import * as moment from 'moment';
 })
 
 export class AppComponent implements OnInit {
-  private chartData: Array<any>;
-  private stackedChartData: Array<any>;
-  private stackedChartData2: Array<any>;
+  chartData: Array<any>;
+  stackedChartData: Array<any>;
+  stackedChartData2: Array<any>;
+  lineChartData: Array<any>;
+
+  groupByWeek = 'week';
+  groupByMonth = 'month';
+
   x_attr = 'fecha';
 
   constructor() {}
 
   ngOnInit() {
     // give everything a chance to get loaded before starting the animation to reduce choppiness
-    this.generateData();
+    this.generateBarData();
     this.generateStackedBarData();
-    setInterval(() => {
-      this.generateData();
 
-      // change the data periodically
-      //setTimeout(() => {
-        this.generateStackedBarData();
-        //this.generateData();
-      //}, 2000);
+    setInterval(() => {
+      this.generateBarData();
+      this.generateStackedBarData();
     }, 20000);
   }
 
-  generateData() {
+  generateBarData() {
     this.chartData = [];
     for (let i = 0; i < (8 + Math.floor(Math.random() * 10)); i++) {
       this.chartData.push([
@@ -72,6 +73,7 @@ export class AppComponent implements OnInit {
         },
       );
     }
-
+    this.lineChartData = this.stackedChartData2;
   }
+
 }
