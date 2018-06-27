@@ -1,6 +1,7 @@
 import { Component, OnInit, ElementRef, ViewChild, Input, ViewEncapsulation, OnChanges, ChangeDetectorRef, Output } from '@angular/core';
 import * as d3 from 'd3';
 import { EventEmitter } from 'events';
+import * as moment from 'moment';
 
 @Component({
   selector: 'app-line-chart',
@@ -16,9 +17,10 @@ export class LineChartComponent implements OnInit, OnChanges {
 
   @Input() private data: Array<any> = [];
   @Input('x') private x_attr: string;
+  @Input('group-by') private group_by: string="day";//day, week, month, year
 
   @Input('transition-duration') private transitionDuration: number = 200;
-  @Input() private colors = d3.scaleLinear().domain([0, this.data.length]).range(<any[]>['green', 'blue']);
+  @Input() private colors =  d3.scaleOrdinal().range(["#A07A19", "#AC30C0", "#EB9A72", "#BA86F5", "#EA22A8"]);
   @Output("data-click") dataClick = new EventEmitter();
 
   
@@ -48,7 +50,38 @@ export class LineChartComponent implements OnInit, OnChanges {
     }
   }
 
+  groupData() {
+      let grouped_elems = d3.nest()
+        // agrupamos por semana/mes, etc y ponemos en la key los dias
+        .key((d: any) => moment(d[this.x_attr]).startOf(this.group_by as moment.unitOfTime.StartOf).format('YYYY-MM-DD'))
+        // TIRA ERROR PERO FUNCIONA EN LA PRACTICA, NO SE PORQUE
+        .rollup((values) => { // aplicamos la funcion a cada grupo
+          const group: any = {};
+          this.keys.forEach( key => {
+            group[key] = d3.sum(values, (d) =>  d[key]);
+          });
+          return group;
+        })
+        .map(this.data);
+        const grouped_elems_list = grouped_elems.values();
+        const grouped_elems_keys = grouped_elems.keys();
+        this.data = grouped_elems_list.map((elem, i) => {
+          elem[this.x_attr] = moment(grouped_elems_keys[i]).toDate();
+          return elem;
+        });
+        //console.log("group by:", this.group_by)
+        //console.log("grouped data:", this.data)     
+    
+  }
+
   ngOnChanges() {
+    this.keys = Object.getOwnPropertyNames(this.data[0]).slice(1);
+    this.groupData();
+
+    this.data = this.data.map(v => {
+      v.total = this.keys.map(key => v[key]).reduce((a, b) => a + b, 0);
+      return v;
+    });
     if (this.chart) {
       this.updateChart();
     }
@@ -96,29 +129,56 @@ export class LineChartComponent implements OnInit, OnChanges {
       .call(d3.axisLeft(this.yScale));
   }
 
+  
+  private drawLegend(dataToDraw) {
+    const legend = this.chart.append('g')
+    .attr('class', 'legend')
+    .attr('font-family', 'sans-serif')
+    .attr('font-size', 10)
+    .attr('text-anchor', 'end')
+    .selectAll('g')
+    .data(dataToDraw)
+    .enter().append('g')
+    .attr('transform', (d, i) => 'translate(0,' + i * 20 + ')');
+
+    legend.append('rect')
+        .attr('x', this.width - 19)
+        .attr('width', 19)
+        .attr('height', 19)
+        .attr('fill', (d, i) => this.zScale(i));
+
+    legend.append('text')
+        .attr('x', this.width - 24)
+        .attr('y', 9.5)
+        .attr('dy', '0.32em')
+        .text(d => d.key);
+  }
+
   updateChart(){
       const x_attr = this.x_attr;
       const minMaxValues = d3.extent(this.data, d => d[x_attr]);
       this.xScale.domain(minMaxValues);
 
+      console.log('d3.max(this.data, (d: any) => d.total)', d3.max(this.data, (d: any) => d.total));
       this.yScale.domain([0, d3.max(this.data, (d: any) => d.total)]).nice();
   
       // update scales & axis
-      this.zScale.domain([0, this.data.length]);
+
+      //this.zScale.domain([0, this.data.length]);
       this.xAxis.transition().call(d3.axisBottom(this.xScale));
       this.yAxis.transition().call(d3.axisLeft(this.yScale));
 
       const stackedDataByKeys = d3.stack().keys(this.keys)(this.data);
       const lineGroup = this.chart.selectAll('.lineGroup')
-        .data(stackedDataByKeys)
-      console.log("stackedDataByKeys", stackedDataByKeys);
-      //TODO revisar linea de abajo
-     /*const lineGenerator = d3.line().x((point_data, i) => {
-        return this.xScale(point_data[this.x_attr]);
+        .data(stackedDataByKeys);
+
+      const lineComponent = this;
+      const lineGenerator = d3.line().x((point_data: any, i) => {
+        return lineComponent.xScale(point_data.data[this.x_attr]);
       })
       //const lineGenerator = d3.line()
       .y(function(point_data) {
-        return this.yScale(point_data[1]);
+        return lineComponent.yScale(point_data[1]);
       });
 
       // remove exiting lines
@@ -136,10 +196,16 @@ export class LineChartComponent implements OnInit, OnChanges {
       const newLines = lineGroup.enter()
         .append('path')
         .attr('class', 'lineGroup')
-        .style('stroke', (d, i) => this.zScale(i))
+        .attr('fill', 'none')
+        .attr('stroke-width', 1.5)
+        .attr('stroke-linejoin', 'round')
+        .attr('stroke-linecap', 'round')
+        .style('stroke', (d, i) => { return this.zScale(i);})
         .attr('d', (d) => {
           return lineGenerator(d);
-        });*/
+      });
+
+      this.drawLegend(stackedDataByKeys);
   }
 
 }
