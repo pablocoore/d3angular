@@ -9,6 +9,7 @@ import * as moment from 'moment';
 
 export class AppComponent implements OnInit {
   chartData: Array<any>;
+  chartData2: Array<any>;
   stackedChartData: Array<any>;
   stackedChartData2: Array<any>;
   lineChartData: Array<any>;
@@ -19,6 +20,11 @@ export class AppComponent implements OnInit {
 
   x_attr = 'fecha';
 
+  show_x=false;
+  show_y=false;
+  thresholds=[50]
+  colors=['red', 'green']
+  enableTooltip=true;
   constructor() {}
 
   ngOnInit() {
@@ -27,17 +33,30 @@ export class AppComponent implements OnInit {
     this.generateStackedBarData();
     this.generatePieChartData();
 
-    setInterval(() => {
+    let a=setInterval(() => {
       this.generateBarData();
       this.generateStackedBarData();
       this.generatePieChartData();
-    }, 20000);
+    }, 10000);
+
+    setTimeout(()=>{
+      clearInterval(a);
+    },40000)
   }
 
   generateBarData() {
     this.chartData = [];
+    this.chartData2 = [];
+
     for (let i = 0; i < (8 + Math.floor(Math.random() * 10)); i++) {
       this.chartData.push([
+        `Index ${i}`,
+        Math.floor(Math.random() * 100)
+      ]);
+    }
+
+    for (let i = 0; i < (30 + Math.floor(Math.random() * 30)); i++) {
+      this.chartData2.push([
         `Index ${i}`,
         Math.floor(Math.random() * 100)
       ]);
@@ -85,8 +104,8 @@ export class AppComponent implements OnInit {
     for (let i = 0; i < (2 + Math.floor(Math.random() * 5)); i++) {
       this.pieChartData.push(
         {
-          "x": soccerPlayers[ (seed+i) % soccerPlayers.length],
-          "y": Math.floor(Math.random() * 50)
+          "label": soccerPlayers[ (seed+i) % soccerPlayers.length],
+          "value": Math.floor(Math.random() * 50)
         },
       );
     }

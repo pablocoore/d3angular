@@ -1,4 +1,5 @@
 .d3-chart {
+    margin:20px;
     width: 100%;
     height: 400px;
 }	
@@ -7,4 +8,24 @@
 }	
 .d3-chart .axis text {
     fill: #999;	
+}
+
+
+div.tooltip-chart {	
+    position: absolute;			
+    text-align: center;			
+    padding: 5px;				
+    font: 12px sans-serif;		
+    background: white;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);	
+    border: 0px;		
+    border-radius: 2px;
+    pointer-events: none;			
+}
+div.tooltip-chart>p{
+    margin: 0px 0px;
+}
+
+.d3-chart .axis path, .d3-chart .axis line {
+    stroke: #dfdfdf;
 }
