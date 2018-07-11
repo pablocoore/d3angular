@@ -159,7 +159,7 @@ export class LineChartComponent implements OnInit, OnChanges {
       const minMaxValues = d3.extent(this.data, d => d[x_attr]);
       this.xScale.domain(minMaxValues);
 
-      console.log('d3.max(this.data, (d: any) => d.total)', d3.max(this.data, (d: any) => d.total));
+//      console.log('d3.max(this.data, (d: any) => d.total)', d3.max(this.data, (d: any) => d.total));
       this.yScale.domain([0, d3.max(this.data, (d: any) => d.total)]).nice();
   
       // update scales & axis

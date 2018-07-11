@@ -48,6 +48,7 @@ export class PieChartComponent implements OnInit, OnChanges {
 
 
   ngOnChanges() {
+    console.log("Pie chart data:",this.data)
     if (this.chart) {
       this.updateChart();
     }
@@ -92,16 +93,23 @@ export class PieChartComponent implements OnInit, OnChanges {
         .innerRadius(this.radius - 40);
 
 
+    // remove exiting arcs
+    //arc.selectAll('text').remove();
+    this.chart.selectAll('.arc').remove();
+
     const arc = this.chart.selectAll('.arc')
       .data(pie(this.data))
-      .enter().append('g')
+    
+    //add new arcs
+    const newArc = arc.enter()
+        .append('g')
         .attr('class', 'arc');
 
-    arc.append('path')
+    newArc.append('path')
         .attr('d', path)
         .attr('fill', (d, i) => this.colorScale(i));
 
-    arc.append('text')
+    newArc.append('text')
         .attr('transform', function(d) { return 'translate(' + label.centroid(d) + ')'; })
         .attr('dy', '0.35em')
         .text( d => d.data[xComponent]);

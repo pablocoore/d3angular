@@ -26,5 +26,5 @@
 </div>
 
 <div style="width:800px">
-    <app-pie-chart></app-pie-chart>
+    <app-pie-chart *ngIf="pieChartData" [data]="pieChartData" ></app-pie-chart>
 </div>

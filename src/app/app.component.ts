@@ -12,6 +12,7 @@ export class AppComponent implements OnInit {
   stackedChartData: Array<any>;
   stackedChartData2: Array<any>;
   lineChartData: Array<any>;
+  pieChartData: Array<any>;
 
   groupByWeek = 'week';
   groupByMonth = 'month';
@@ -24,10 +25,12 @@ export class AppComponent implements OnInit {
     // give everything a chance to get loaded before starting the animation to reduce choppiness
     this.generateBarData();
     this.generateStackedBarData();
+    this.generatePieChartData();
 
     setInterval(() => {
       this.generateBarData();
       this.generateStackedBarData();
+      this.generatePieChartData();
     }, 20000);
   }
 
@@ -75,5 +78,17 @@ export class AppComponent implements OnInit {
     }
     this.lineChartData = this.stackedChartData2;
   }
-
+  generatePieChartData(){
+    this.pieChartData=[];
+    let soccerPlayers=["Cristiano Ronaldo", "Lionel Messi", "Neymar", "Paul Pogba", "Luis Suárez", "Edinson Cavani", "Gareth Bale", "Harry Kane", "Andrés Iniesta"]
+    let seed =Math.floor(Math.random() * soccerPlayers.length);
+    for (let i = 0; i < (2 + Math.floor(Math.random() * 5)); i++) {
+      this.pieChartData.push(
+        {
+          "x": soccerPlayers[ (seed+i) % soccerPlayers.length],
+          "y": Math.floor(Math.random() * 50)
+        },
+      );
+    }
+  }
 }
