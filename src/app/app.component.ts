@@ -26,6 +26,8 @@ export class AppComponent implements OnInit {
   show_x=false;
   show_y=false;
   thresholds=[50]
+  colors2=['steelblue']
+
   colors=['red', 'green']
   enableTooltip=true;
   constructor() {}

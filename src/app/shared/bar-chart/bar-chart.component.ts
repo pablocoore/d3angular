@@ -175,7 +175,11 @@ export class BarChartComponent implements OnInit, OnChanges {
   }
   barColor(data, index){
     if(this.threshold_list.length==0){
-      return this.colors(index);
+      if (this.color_list.length==1){
+        return this.color_list[0]; 
+      }else{
+        return this.colors(index);
+      }
     }else{
       return d3.scaleThreshold().domain(this.threshold_list).range(<any[]>this.color_list)(data)
     }
