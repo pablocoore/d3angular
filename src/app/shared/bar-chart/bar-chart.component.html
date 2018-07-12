@@ -4,8 +4,9 @@
     <div class="d3-chart" (mousemove)="trackMousePosition($event)" #chart></div>
 
     <div #tooltipElem class="tooltip-chart" style="opacity: 1" [style.left]="tooltip.left" [style.top]="tooltip.top">
-        <p style="color:gray">{{tooltip.x}}</p>
-        <p style="font-weight:bold">{{tooltip.y}}</p>
-        <p>{{tooltip.z}}</p>
+        <p style="color:gray">{{tooltip.y}}</p>
+        <p style="font-weight:bold">{{tooltip.x}}</p>
+        <p *ngIf="tooltip.z">{{tooltip.z}}</p>
+        <p *ngFor="let extra of tooltip.extra">{{extra}}</p>
     </div>
 </div>

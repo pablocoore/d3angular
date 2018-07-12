@@ -19,7 +19,10 @@ export class AppComponent implements OnInit {
   groupByMonth = 'month';
 
   x_attr = 'fecha';
-
+  x= 'x';
+  y= 'y';
+  showExtraData='showExtraData';
+  
   show_x=false;
   show_y=false;
   thresholds=[50]
@@ -56,10 +59,13 @@ export class AppComponent implements OnInit {
     }
 
     for (let i = 0; i < (30 + Math.floor(Math.random() * 30)); i++) {
-      this.chartData2.push([
-        `Index ${i}`,
-        Math.floor(Math.random() * 100)
-      ]);
+      this.chartData2.push({
+          x:`Index ${i}`,
+          y:Math.floor(Math.random() * 100),
+          price: '$'+ (150+Math.floor(Math.random() * 100)),
+          cost: '$'+ (20+Math.floor(Math.random() * 120))
+        }
+      );
     }
   }
 

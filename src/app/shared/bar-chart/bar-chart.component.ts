@@ -13,15 +13,19 @@ export class BarChartComponent implements OnInit, OnChanges {
   @Input() private data: Array<any>;
   @Input() private showYAxis = true;
   @Input() private showXAxis = true;
+  @Input() private x ="";
+  @Input() private y ="";
+
   @Input("color-list") private color_list = ['red', 'blue'];
   @Input("threshold-list") private threshold_list: number[] = [];//ordered list of thresholds: [5.4, 27, 45]
   @ViewChild('tooltipElem') private tooltipElem: ElementRef;
   @Input('enable-tooltip') private enableTooltips = false;
+  @Input('show-object-data-on-tooltip') private showObjectDataOnTooltip = false;
 
   @Input('transition-duration') private transitionDuration: number = 200;
   @Output("data-click") dataClick = new EventEmitter();
 
-  @Input() public tooltip: any ={x:"", y:"", z: "", top: "0px", left:"0px", opacity:0};
+  @Input() public tooltip: any ={x:"", y:"", z: "", top: "0px", left:"0px", opacity:0, extra:[]};
   public mouse = {x: 0, y: 0};
 
   private margin: any = { top: 20, bottom: 20, left: 20, right: 20};
@@ -49,17 +53,45 @@ export class BarChartComponent implements OnInit, OnChanges {
       this.updateChart();
     }
   }
+
+  setTooltipExtraElems(d){
+    if (this.showObjectDataOnTooltip){
+      let keys = Object.getOwnPropertyNames(d).filter(elem=>{ return elem!=this.x && elem!=this.y})
+      this.tooltip.extra=[];
+      keys.forEach(key => {
+        this.tooltip.extra.push(key + ": "+ d[key]);
+      });  
+    }
+  }
+
   public trackMousePosition($event) {
     this.mouse.x = $event.offsetX - 30;
     this.mouse.y = $event.offsetY - 30;
   }
+
+  private getYElem(d){
+    if(this.y!=''){
+      return d[this.y];
+    }else{
+      return d[1];
+    }
+  }
+
+  private getXElem(d){
+    if(this.x!=''){
+      return d[this.x];
+    }else{
+      return d[0];
+    }
+  }
+
   public highLightSelected(id){
     this.chart.selectAll(".bar")
       .filter((d,j)=> id !== j )
       .transition()
       .duration(this.transitionDuration)
       .style('fill', (d, i) => {
-        const grayscale = d3.scaleLinear().domain([0, 1]).range(<any[]>['#dfdfdf', this.barColor(d[1], i)]);
+        const grayscale = d3.scaleLinear().domain([0, 1]).range(<any[]>['#dfdfdf', this.barColor(this.getYElem(d), i)]);
         return grayscale(0.5);
       });
   }
@@ -71,14 +103,13 @@ export class BarChartComponent implements OnInit, OnChanges {
     this.chart.selectAll('.bar')
       .on('mouseenter', (d, i) => {
         this.highLightSelected(i);
-        this.tooltip.y = d[0];
+        this.tooltip.y = this.getXElem(d);
+        this.tooltip.x = this.getYElem(d);
+        this.setTooltipExtraElems(d);
       })
       .on('mousemove', (d) => {
         tooltip.transition().duration(this.transitionDuration).style('opacity', 0.95);
-        this.tooltip.x = d[1];
-        this.tooltip.z = "WOOOW!!!";
-      
-        const xPos = this.mouse.x + 40;
+        const xPos = this.mouse.x + 60;
         this.tooltip.left =  '' + xPos + 'px';
         this.tooltip.top = '' + this.mouse.y + 'px';
         this.ref.markForCheck();
@@ -87,13 +118,13 @@ export class BarChartComponent implements OnInit, OnChanges {
         this.chart.selectAll('.bar')
           .transition()
           .duration(this.transitionDuration)
-          .style('fill', (d, i) => this.barColor(d[1], i))
+          .style('fill', (d, i) => this.barColor(this.getYElem(d), i))
         tooltip.transition().duration(500).style('opacity', 0)
       })
       .on('click', (d) => {
         const elem = {};
-        elem['label'] = d[0];
-        elem['value'] = d[1];
+        elem['label'] = this.getXElem(d);
+        elem['value'] = this.getYElem(d);
         this.dataClick.emit(elem);
       });
   }
@@ -112,8 +143,8 @@ export class BarChartComponent implements OnInit, OnChanges {
       .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`);
 
     // define X & Y domains
-    const xDomain = this.data.map(d => d[0]);
-    const yDomain = [0, d3.max(this.data, d => d[1])];
+    const xDomain = this.data.map(d => this.getXElem(d));
+    const yDomain = [0, d3.max(this.data, d => this.getYElem(d))];
 
     // create scales
     this.xScale = d3.scaleBand().padding(0.1).domain(xDomain).rangeRound([0, this.width]);
@@ -152,8 +183,8 @@ export class BarChartComponent implements OnInit, OnChanges {
 
   updateChart() {
     // update scales & axis
-    this.xScale.domain(this.data.map(d => d[0]));
-    this.yScale.domain([0, d3.max(this.data, d => d[1])]);
+    this.xScale.domain(this.data.map(d => this.getXElem(d)));
+    this.yScale.domain([0, d3.max(this.data, d => this.getYElem(d))]);
     this.colors.domain([0, this.data.length]);
     if(this.showXAxis){
       this.xAxis.transition().call(d3.axisBottom(this.xScale));
@@ -170,26 +201,26 @@ export class BarChartComponent implements OnInit, OnChanges {
 
     // update existing bars
     this.chart.selectAll('.bar').transition()
-      .attr('x', d => this.xScale(d[0]))
-      .attr('y', d => this.yScale(d[1]))
+      .attr('x', d => this.xScale(this.getXElem(d)))
+      .attr('y', d => this.yScale(this.getYElem(d)))
       .attr('width', d => this.xScale.bandwidth())
-      .attr('height', d => this.height - this.yScale(d[1]))
-      .style('fill', (d, i) => this.barColor(d[1],i));
+      .attr('height', d => this.height - this.yScale(this.getYElem(d)))
+      .style('fill', (d, i) => this.barColor(this.getYElem(d),i));
 
     // add new bars
     update
       .enter()
       .append('rect')
       .attr('class', 'bar')
-      .attr('x', d => this.xScale(d[0]))
+      .attr('x', d => this.xScale(this.getXElem(d)))
       .attr('y', d => this.yScale(0))
       .attr('width', this.xScale.bandwidth())
       .attr('height', 0)
-      .style('fill', (d, i) => this.barColor(d[1],i))
+      .style('fill', (d, i) => this.barColor(this.getYElem(d),i))
       .transition()
       .delay((d, i) => i * 10)
-      .attr('y', d => this.yScale(d[1]))
-      .attr('height', d => this.height - this.yScale(d[1]));
+      .attr('y', d => this.yScale(this.getYElem(d)))
+      .attr('height', d => this.height - this.yScale(this.getYElem(d)));
 
     if (this.enableTooltips){
       this.barEvents();
