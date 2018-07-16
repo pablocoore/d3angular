@@ -9,9 +9,13 @@ import * as moment from 'moment';
 
 export class AppComponent implements OnInit {
   chartData: Array<any>;
+  horizontalBarData=[35];
+
   chartData2: Array<any>;
   stackedChartData: Array<any>;
   stackedChartData2: Array<any>;
+  stackedChartData3: Array<any>;
+
   lineChartData: Array<any>;
   pieChartData: Array<any>;
 
@@ -19,16 +23,20 @@ export class AppComponent implements OnInit {
   groupByMonth = 'month';
 
   x_attr = 'fecha';
+  y_attrs = ['percentage_completed', 'percentage_missing'];
+
   x= 'x';
   y= 'y';
   showExtraData='showExtraData';
   
-  show_x=false;
-  show_y=false;
+  format_percentage="percentage";
+  false_value=false;
+
   thresholds=[50]
   colors2=['steelblue']
 
-  colors=['red', 'green']
+  colors=['#dc3545', '#28a745'];
+  colors3=['#28a745','#fff', '#dc3545']
   enableTooltip=true;
   constructor() {}
 
@@ -78,14 +86,14 @@ export class AppComponent implements OnInit {
   generateStackedBarData() {
     this.stackedChartData = [];
     this.stackedChartData2 = [];
+    this.stackedChartData3 = [];
 
     for (let i = 0; i < (8 + Math.floor(Math.random() * 40)); i++) {
       this.stackedChartData.push(
         {
           "fecha": moment().add(i,'d').toDate(),
           "JORGE MARTINEZ":Math.floor(Math.random() * 2),
-          "DANIEL ANDRADE":Math.floor(Math.random() * 8),
-          "JUAN GONZALEZ":Math.floor(Math.random() * 6)
+          "DANIEL ANDRADE":Math.floor(Math.random() * 8)
         },
       );
     }
@@ -100,6 +108,21 @@ export class AppComponent implements OnInit {
           "Julio Sanguinetti":Math.floor(Math.random() * 8),
           "Luis Lacalle":Math.floor(Math.random() * 4)
 
+        },
+      );
+    }
+
+    for (let i = 0; i < (30 + Math.floor(Math.random() * 40)); i++) {
+      let total_hours=Math.floor(Math.random() * 40);
+      let invoiced_hours=Math.floor(Math.random() * total_hours);
+      let percentage = total_hours>0? Math.floor(invoiced_hours/total_hours*100): 0;
+      this.stackedChartData3.push(
+        {
+          "fecha": moment().add(i*7,'d').toDate(),
+          "percentage_completed":percentage,
+          "percentage_missing":percentage<100? 100-percentage: 0,
+          "Total hours":total_hours,
+          "Invoiced hours":invoiced_hours,
         },
       );
     }

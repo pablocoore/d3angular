@@ -20,6 +20,8 @@ export class BarChartComponent implements OnInit, OnChanges {
   @Input("threshold-list") private threshold_list: number[] = [];//ordered list of thresholds: [5.4, 27, 45]
   @ViewChild('tooltipElem') private tooltipElem: ElementRef;
   @Input('enable-tooltip') private enableTooltips = false;
+  @Input('percentage-values') private percentageValues = [];
+  
   @Input('show-object-data-on-tooltip') private showObjectDataOnTooltip = false;
 
   @Input('transition-duration') private transitionDuration: number = 200;
@@ -54,12 +56,25 @@ export class BarChartComponent implements OnInit, OnChanges {
     }
   }
 
+
+  private isFloat(n){//checking if it's a number and float
+      return Number(n) === n && n % 1 !== 0;
+  }
+
+  private prettyPrint(value, key=null){
+    let iniString='';
+    if (key!=null && this.percentageValues.indexOf(key)!=-1){
+      iniString='% ';
+    }
+    return iniString + (this.isFloat(value) ? value.toFixed(2): value);
+  }
+
   setTooltipExtraElems(d){
     if (this.showObjectDataOnTooltip){
       let keys = Object.getOwnPropertyNames(d).filter(elem=>{ return elem!=this.x && elem!=this.y})
       this.tooltip.extra=[];
       keys.forEach(key => {
-        this.tooltip.extra.push(key + ": "+ d[key]);
+        this.tooltip.extra.push(key + ": "+ this.prettyPrint(d[key], key));
       });  
     }
   }
@@ -103,8 +118,8 @@ export class BarChartComponent implements OnInit, OnChanges {
     this.chart.selectAll('.bar')
       .on('mouseenter', (d, i) => {
         this.highLightSelected(i);
-        this.tooltip.y = this.getXElem(d);
-        this.tooltip.x = this.getYElem(d);
+        this.tooltip.y = this.prettyPrint(this.getYElem(d), this.y);
+        this.tooltip.x = this.prettyPrint(this.getXElem(d), this.x);
         this.setTooltipExtraElems(d);
       })
       .on('mousemove', (d) => {

@@ -7,6 +7,7 @@ import { BarChartComponent } from './shared/bar-chart/bar-chart.component';
 import { StackedBarChartComponent } from './shared/stacked-bar-chart/stacked-bar-chart.component';
 import { LineChartComponent } from './shared/line-chart/line-chart.component';
 import { PieChartComponent } from './shared/pie-chart/pie-chart.component';
+import { HorizontalBarComponent } from './shared/horizontal-bar/horizontal-bar.component';
 
 
 @NgModule({
@@ -15,7 +16,8 @@ import { PieChartComponent } from './shared/pie-chart/pie-chart.component';
     BarChartComponent,
     StackedBarChartComponent,
     LineChartComponent,
-    PieChartComponent
+    PieChartComponent,
+    HorizontalBarComponent
   ],
   imports: [
     BrowserModule,

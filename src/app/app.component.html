@@ -4,11 +4,15 @@
 </div>
 
 <div style="width:800px;">
-    <app-bar-chart *ngIf="chartData2" [data]="chartData2" [showXAxis]="show_x" [showYAxis]="show_y" [color-list]="colors" [threshold-list]="thresholds" [enable-tooltip]="enableTooltip" [x]="x" [y]="y" [show-object-data-on-tooltip]="showExtraData" ></app-bar-chart>
+    <app-bar-chart *ngIf="chartData2" [data]="chartData2" [showXAxis]="false_value" [showYAxis]="false_value" [color-list]="colors" [threshold-list]="thresholds" [enable-tooltip]="enableTooltip" [x]="x" [y]="y" [show-object-data-on-tooltip]="showExtraData" ></app-bar-chart>
 </div>
 
 <div style="width:800px;">
-    <app-bar-chart *ngIf="chartData2" [data]="chartData2" [showYAxis]="show_y" [color-list]="colors2" [enable-tooltip]="enableTooltip" [x]="x" [y]="y" [show-object-data-on-tooltip]="showExtraData" ></app-bar-chart>
+    <app-bar-chart *ngIf="chartData2" [data]="chartData2" [showYAxis]="false_value" [color-list]="colors2" [enable-tooltip]="enableTooltip" [x]="x" [y]="y" [show-object-data-on-tooltip]="showExtraData" ></app-bar-chart>
+</div>
+
+<div>
+    <app-horizontal-bar style="width:800px; height:40px" *ngIf="horizontalBarData" [data]="horizontalBarData" [color-list]="colors2"></app-horizontal-bar>
 </div>
 
 <div style="width:800px">
@@ -30,6 +34,20 @@
 
 <div style="width:800px">
     <app-line-chart *ngIf="stackedChartData2" [data]="stackedChartData2" [x]="x_attr"></app-line-chart>
+</div>
+
+<div style="width:800px">
+    <app-stacked-bar-chart *ngIf="stackedChartData3" 
+    [data]="stackedChartData3"
+    [showXAxis]="false_value" 
+    [showYAxis]="false_value" 
+    [showLegend]="false_value"  
+    [x]="x_attr" 
+    [ys]="y_attrs" 
+    [show-object-data-on-tooltip]="showExtraData" 
+    [group-elements]="false_value"
+    [format-values]="format_percentage"
+    [colors]="colors3"></app-stacked-bar-chart>
 </div>
 
 <div style="width:600px;height:600px">

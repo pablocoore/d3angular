@@ -11,6 +11,7 @@ import { Component,
 
 import * as d3 from 'd3';
 import * as moment from 'moment';
+import { text } from 'd3';
 
 
 var locale ={
@@ -44,10 +45,19 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
 
   @Input() private data: Array<any>;
   @Input('x') private x_attr: string;
+  @Input('ys') private y_attrs: string[]=[];
+  @Input() private showYAxis = true;
+  @Input() private showXAxis = true;
+  @Input() private showLegend = true;
+  @Input('enable-tooltip') private enableTooltips = true;
+  @Input('show-object-data-on-tooltip') private showObjectDataOnTooltip = false;
+  @Input('percentage-values') private percentageValues = [];
+
+  @Input('group-elements') private groupElements: boolean=true;
+
   @Input('group-by') private group_by: string="day";//day, week, month, year
   @Input('min-bar-width') private minBarWidth: number = 8;
   @Input('transition-duration') private transitionDuration: number = 200;
-  //@Input() private colors: string[] = ['#98abc5', '#8a89a6', '#7b6888', '#6b486b', '#a05d56', '#d0743c', '#ff8c00'];
   @Input() private colors: string[] = ['#98abc5', '#8a89a6', '#7b6888', '#6b486b', '#a05d56', '#d0743c', '#ff8c00', "#8595e1", "#b5bbe3", "#e6afb9", "#e07b91", "#d33f6a", "#11c638", "#8dd593", "#c6dec7", "#ead3c6", "#f0b98d", "#ef9708", "#0fcfc0", "#9cded6", "#d5eae7", "#f3e1eb", "#f6c4e1", "#f79cd4"];
   @Output("data-click") dataClick = new EventEmitter();
   
@@ -55,8 +65,10 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
   @Output("tooltip-text-function") tooltipTextFunctionExtern = new EventEmitter<any>();
 
   @Input("type-datetime") private typeDatetime = true;
+  @Input("format-values") private formatValues = "time";//time/percentage
+
   
-  @Input() public tooltip: any ={x:"", y:"", z: "", top: "0px", left:"0px", opacity:0};
+  @Input() public tooltip: any ={x:"", y:"", z: "", top: "0px", left:"0px", opacity:0, extra:[]};
 
   private margin: any = { top: 20, bottom: 20, left: 30, right: 20};
 
@@ -68,7 +80,6 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
   private zScale: any;
   private xAxis: any;
   private yAxis: any;
-  private zAxis: any;
 
   public mouse = {x: 0, y: 0};
   private keys = [];
@@ -83,11 +94,10 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
   }
 
   groupData() {
-    if (this.typeDatetime){
+    if (this.groupElements){
       let grouped_elems = d3.nest()
         // agrupamos por semana/mes, etc y ponemos en la key los dias
         .key((d: any) => moment(d[this.x_attr]).startOf(this.group_by as moment.unitOfTime.StartOf).format('YYYY-MM-DD'))
-        // TIRA ERROR PERO FUNCIONA EN LA PRACTICA, NO SE PORQUE
         .rollup((values) => { // aplicamos la funcion a cada grupo
           const group: any = {};
           this.keys.forEach( key => {
@@ -109,10 +119,14 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
 
   ngOnChanges() {
     // obtenemos las keys de los objetos
-    this.keys = Object.getOwnPropertyNames(this.data[0]).slice(1);
+    if (this.y_attrs.length>0){
+      this.keys=this.y_attrs;
+    }else{
+      this.keys = Object.getOwnPropertyNames(this.data[0]).filter(elem=> elem!=this.x_attr);
+    }
     this.groupData();
-    //console.log(this.data)
     // agregamos la variable total a cada dato
+    console.log("this.colors", this.colors)
     this.data = this.data.map(v => {
       v.total = this.keys.map(key => v[key]).reduce((a, b) => a + b, 0);
       return v;
@@ -141,15 +155,39 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
     this.mouse.y = $event.offsetY - 30;
   }
 
+
+  private isFloat(n){//checking if it's a number and float
+      return Number(n) === n && n % 1 !== 0;
+  }
+
+  private prettyPrint(value, key=null){
+    let iniString='';
+    if (key!=null && this.percentageValues.indexOf(key)!=-1){
+      iniString='% ';
+    }
+    return iniString + (this.isFloat(value) ? value.toFixed(2): value);
+  }
+
+
+
   public highLightSelectedGroup(groupId){
     this.chart.selectAll(".barGroup")
-      .filter((d,j)=> groupId !== j )
+      .filter((d,j)=> j < groupId)
       .transition()
       .duration(this.transitionDuration)
       .style('fill', (d, i) => {
-        const grayscale = d3.scaleLinear().domain([0, 1]).range(<any[]>['#dfdfdf', this.zScale(i)]);
+        const grayscale = d3.scaleLinear().domain([0, 1]).range(<any[]>['#dfdfdf', this.zScale(i-1)]);
         return grayscale(0.5);
       });
+      this.chart.selectAll(".barGroup")
+      .filter((d,j)=> j > groupId )
+      .transition()
+      .duration(this.transitionDuration)
+      .style('fill', (d, i) => {
+        const grayscale = d3.scaleLinear().domain([0, 1]).range(<any[]>['#dfdfdf', this.zScale(i+1)]);
+        return grayscale(0.5);
+      });
+
       //.style('opacity', 0.5);
   }
 
@@ -169,20 +207,24 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
     // create scales
     if (this.typeDatetime){
         this.xScale = d3.scaleTime().range([0, this.width - 150]);
-        this.xAxis = svg.append('g')
-          .attr('class', 'axis axis-x')
-          .attr('transform', `translate(${this.margin.left}, ${this.margin.top + this.height})`)
-          .call(d3.axisBottom(this.xScale)
-                  .ticks(d3.timeDay, 2)
-                  .tickFormat(d3.timeFormat('%b %d'))
-          );
-          this.setBarWidth();
+        if (this.showYAxis){
+          this.xAxis = svg.append('g')
+            .attr('class', 'axis axis-x')
+            .attr('transform', `translate(${this.margin.left}, ${this.margin.top + this.height})`)
+            .call(d3.axisBottom(this.xScale)
+                    .ticks(d3.timeDay, 2)
+                    .tickFormat(d3.timeFormat('%b %d'))
+            );
+            this.setBarWidth();
+        }
     }else{
         this.xScale = d3.scaleBand().padding(0.1).domain(xDomain).rangeRound([0, this.width - 150]);
-        this.xAxis = svg.append('g')
-          .attr('class', 'axis axis-x')
-          .attr('transform', `translate(${this.margin.left}, ${this.margin.top + this.height})`)
-          .call(d3.axisBottom(this.xScale));
+        if (this.showYAxis){
+          this.xAxis = svg.append('g')
+            .attr('class', 'axis axis-x')
+            .attr('transform', `translate(${this.margin.left}, ${this.margin.top + this.height})`)
+            .call(d3.axisBottom(this.xScale));
+        }
         this.barWidth=this.xScale.bandwidth();
     }
 
@@ -191,10 +233,12 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
     this.zScale = d3.scaleOrdinal()
       .range(this.colors);
     // y axis
-    this.yAxis = svg.append('g')
+    if (this.showYAxis){
+      this.yAxis = svg.append('g')
       .attr('class', 'axis axis-y')
       .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
       .call(d3.axisLeft(this.yScale));
+    }
 
     // chart plot area
     this.chart = svg.append('g')
@@ -245,44 +289,63 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
   }
 
   private drawLegend(dataToDraw) {
-    const legend = this.chart.append('g')
-    .attr('class', 'legend')
-    .attr('font-family', 'sans-serif')
-    .attr('font-size', 10)
-    .attr('text-anchor', 'end')
-    .selectAll('g')
-    .data(dataToDraw)
-    .enter().append('g')
-    .attr('transform', (d, i) => 'translate(0,' + i * 20 + ')');
-
-    legend.append('rect')
-        .attr('x', this.width - 19)
-        .attr('width', 19)
-        .attr('height', 19)
-        .attr('fill', (d, i) => this.zScale(i));
-
-    legend.append('text')
-        .attr('x', this.width - 24)
-        .attr('y', 9.5)
-        .attr('dy', '0.32em')
-        .text(d => d.key);
-    this.chart.selectAll('.legend')
-      .on('mouseenter', (d, i) => {
-        this.highLightSelectedGroup(i);
-        this.tooltip.y = d?d.key:"";
-      }).on('mouseout', () => this.chart.selectAll(".barGroup").transition().duration(this.transitionDuration).style('opacity', 1));
+    if(this.showLegend){
+      const legend = this.chart.append('g')
+      .attr('class', 'legend')
+      .attr('font-family', 'sans-serif')
+      .attr('font-size', 10)
+      .attr('text-anchor', 'end')
+      .selectAll('g')
+      .data(dataToDraw)
+      .enter().append('g')
+      .attr('transform', (d, i) => 'translate(0,' + i * 20 + ')');
+  
+      legend.append('rect')
+          .attr('x', this.width - 19)
+          .attr('width', 19)
+          .attr('height', 19)
+          .attr('fill', (d, i) => this.zScale(i));
+  
+      legend.append('text')
+          .attr('x', this.width - 24)
+          .attr('y', 9.5)
+          .attr('dy', '0.32em')
+          .text(d => d.key);
+      this.chart.selectAll('.legend')
+        .on('mouseenter', (d, i) => {
+          this.highLightSelectedGroup(i);
+          this.tooltip.y = d?d.key:"";
+        }).on('mouseout', () => this.chart.selectAll(".barGroup").transition().duration(this.transitionDuration).style('opacity', 1));
+    }
   }
 
   private tooltipTextFunction(elem, value){
+    let extra=[]
+    if (this.showObjectDataOnTooltip){
+      let keys = Object.getOwnPropertyNames(elem).filter(elem=>{ return elem!="total" && elem!=this.x_attr && this.y_attrs.indexOf(elem)==-1})
+      keys.forEach(key => {
+        extra.push(key + ": "+ this.prettyPrint(elem[key], key));
+      });  
+    }
+
     if (this.typeDatetime){
-      const durationHS = moment.duration(value, 'h');
-      const days = durationHS.days();
       let textToDisplay = '';
-      textToDisplay += durationHS.days() > 0 ? durationHS.days() + 'd ' : '';
-      textToDisplay += durationHS.hours() > 0 ? durationHS.hours() + 'h' : '';
-      textToDisplay += durationHS.hours() > 1 ? 's' : ''; // si es mas de una hora se transforma a plural
-      textToDisplay += durationHS.minutes() > 0 ?  ' ' + durationHS.minutes() + 'm' : '';
       let tooltipHeader = '';
+      switch (this.formatValues) {
+        case "time":
+          const durationHS = moment.duration(value, 'h');
+          const days = durationHS.days();
+          
+          textToDisplay += durationHS.days() > 0 ? durationHS.days() + 'd ' : '';
+          textToDisplay += durationHS.hours() > 0 ? durationHS.hours() + 'h' : '';
+          textToDisplay += durationHS.hours() > 1 ? 's' : ''; // si es mas de una hora se transforma a plural
+          textToDisplay += durationHS.minutes() > 0 ?  ' ' + durationHS.minutes() + 'm' : '';
+          textToDisplay='Total trabajado: ' + textToDisplay;
+        break;
+        case "percentage":
+          textToDisplay = "% "+ value
+        break;
+      }
       switch (this.group_by) {
         case 'day':
           tooltipHeader = d3.timeFormat('%e %B %Y')(elem[this.x_attr]);
@@ -294,43 +357,47 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
           tooltipHeader = d3.timeFormat('%B')(elem[this.x_attr]);
         break;
       }
-      return {x: tooltipHeader, y:'', z: ('Total trabajado: ' + textToDisplay)};
+      return {x: tooltipHeader, y:'', z: textToDisplay, extra: extra}
     }else{
-      return {x: elem[this.x_attr], y:'', z: value};
+      return {x: elem[this.x_attr], y:'', z: value, extra: extra};
     }
   }
 
   private barEvents() {
-    const tooltip = d3.select(this.tooltipElem.nativeElement)
+    if (this.enableTooltips){
+      const tooltip = d3.select(this.tooltipElem.nativeElement)
       .style('opacity', 0);
-    this.chart.selectAll('.barGroup')
-      .on('mouseenter', (d, i) => {
-        this.highLightSelectedGroup(i);
-        this.tooltip.y = d.key;
-      }).on('mouseout', () => this.chart.selectAll('.barGroup').transition().duration(this.transitionDuration)
-      .style('fill', (d, i) => this.zScale(i)));
+      this.chart.selectAll('.barGroup')
+        .on('mouseenter', (d, i) => {
+          this.highLightSelectedGroup(i);
+          this.tooltip.y = d.key;
+        }).on('mouseout', () => this.chart.selectAll('.barGroup').transition().duration(this.transitionDuration)
+        .style('fill', (d, i) => this.zScale(i)));
+      this.chart.selectAll('.barGroup').selectAll('.bar')
+        .on('mousemove', (d) => {
+          tooltip.transition().duration(this.transitionDuration).style('opacity', 0.95);
+          if (!this.overrideTooltipFunction){
+            let textTooltip = this.tooltipTextFunction(d.data, d[1] - d[0]);
+            this.tooltip.x = textTooltip.x;
+            this.tooltip.z = textTooltip.z;
+            this.tooltip.extra = textTooltip.extra;
+          }else{
+            const elem_to_emit = {};
+            elem_to_emit[this.x_attr] = d.data[this.x_attr];
+            elem_to_emit['key'] = this.tooltip.y;
+            elem_to_emit['value'] = (d[1] - d[0]);
+            elem_to_emit['extra'] = this.tooltip.extra;
+            this.tooltipTextFunctionExtern.emit(elem_to_emit)
+          }
+          
+          const xPos = this.mouse.x + 40;
+          this.tooltip.left =  '' + xPos + 'px';
+          this.tooltip.top = '' + this.mouse.y + 'px';
+          this.ref.markForCheck();
+        })
+        .on('mouseout', () => tooltip.transition().duration(500).style('opacity', 0))
+    }
     this.chart.selectAll('.barGroup').selectAll('.bar')
-      .on('mousemove', (d) => {
-        tooltip.transition().duration(this.transitionDuration).style('opacity', 0.95);
-        
-        if (!this.overrideTooltipFunction){
-          let textTooltip = this.tooltipTextFunction(d.data, d[1] - d[0]);
-          this.tooltip.x = textTooltip.x;
-          this.tooltip.z = textTooltip.z;
-        }else{
-          const elem_to_emit = {};
-          elem_to_emit[this.x_attr] = d.data[this.x_attr];
-          elem_to_emit['key'] = this.tooltip.y;
-          elem_to_emit['value'] = (d[1] - d[0]);
-          this.tooltipTextFunctionExtern.emit(elem_to_emit)
-        }
-        
-        const xPos = this.mouse.x + 40;
-        this.tooltip.left =  '' + xPos + 'px';
-        this.tooltip.top = '' + this.mouse.y + 'px';
-        this.ref.markForCheck();
-      })
-      .on('mouseout', () => tooltip.transition().duration(500).style('opacity', 0))
       .on('click', (d) => {
         const elem = {};
         elem[this.x_attr] = d.data[this.x_attr];
@@ -353,36 +420,40 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
             minMaxValues[0] = moment(minMaxValues[0]).startOf('day').subtract(12, 'h');
             minMaxValues[1] = moment(minMaxValues[1]).endOf('day').add(12, 'h');
             this.xScale.domain(minMaxValues);
-            this.xAxis.transition().call(d3.axisBottom(this.xScale).tickFormat(d3.timeFormat('%b %d')));
+            if (this.showXAxis) this.xAxis.transition().call(d3.axisBottom(this.xScale).tickFormat(d3.timeFormat('%b %d')));
           break;
           case 'week':
             minMaxValues[0] = moment(minMaxValues[0]).startOf('week').subtract(3, 'd');
             minMaxValues[1] = moment(minMaxValues[1]).endOf('week').add(3, 'd');
             this.xScale.domain(minMaxValues);
-            this.xAxis.transition().call(d3.axisBottom(this.xScale).tickFormat(d3.timeFormat('%b %d')));
+            if (this.showXAxis) this.xAxis.transition().call(d3.axisBottom(this.xScale).tickFormat(d3.timeFormat('%b %d')));
           break;
           case 'month':
             minMaxValues[0] = moment(minMaxValues[0]).startOf('month').subtract(2, 'w');
             minMaxValues[1] = moment(minMaxValues[1]).endOf('month').add(2, 'w');
             this.xScale.domain(minMaxValues);
-            this.xAxis.transition().call(d3.axisBottom(this.xScale).ticks(d3.timeMonth, 1).tickFormat(d3.timeFormat('%b-%Y')));
+            if (this.showXAxis) this.xAxis.transition().call(d3.axisBottom(this.xScale).ticks(d3.timeMonth, 1).tickFormat(d3.timeFormat('%b-%Y')));
           break;
         }
 
         this.setBarWidth();
       }
-
       this.yScale.domain([0, d3.max(this.data, (d: any) => d.total)]).nice();
-  
-      // update scales & axis
-      this.zScale.domain([0, this.data.length]);
-      const stackedDataByKeys = d3.stack().keys(this.keys)(this.data);
 
-      this.yAxis.transition().call(() => {
-        d3.axisLeft(this.yScale);
-        this.yAxis.select('.domain').remove();
-        this.yAxis.selectAll('line').attr('x2', this.xScale(minMaxValues[1]) * 0.9);
-      });
+      if (this.showYAxis){
+        this.yAxis.transition().call(() => {
+          d3.axisLeft(this.yScale);
+          this.yAxis.select('.domain').remove();
+          this.yAxis.selectAll('line').attr('x2', this.xScale(minMaxValues[1]) * 0.9);
+        });
+      }
+      
+      // update scales & axis
+      this.zScale.domain([0, this.keys.length]);
+      //console.log("this.keys", this.keys)
+      const stackedDataByKeys = d3.stack().keys(this.keys)(this.data);
+      //console.log("stackedDataByKeys", stackedDataByKeys)
+
       //console.log("d3.axisBottom().ticks().length", d3.axisBottom().ticks().length)
       this.drawBars(stackedDataByKeys)
   
