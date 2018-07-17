@@ -1,6 +1,6 @@
-<div style="position: relative">
+<div style="position: relative; width:inherit; height: inherit">
 
-    <div class="d3-chart" (mousemove)="trackMousePosition($event)" #chart></div>
+    <div style="width:inherit; height: inherit" (mousemove)="trackMousePosition($event)" #chart></div>
 
     <div #tooltipElem class="tooltip-chart" style="opacity: 1" [style.left]="tooltip.left" [style.top]="tooltip.top">
         <p style="color:gray">{{tooltip.x}}</p>
