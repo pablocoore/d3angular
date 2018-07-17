@@ -126,8 +126,10 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
     }
     this.groupData();
     // agregamos la variable total a cada dato
-    console.log("this.colors", this.colors)
     this.data = this.data.map(v => {
+      if (this.typeDatetime){
+        v[this.x_attr]=moment(v[this.x_attr]).toDate();
+      }
       v.total = this.keys.map(key => v[key]).reduce((a, b) => a + b, 0);
       return v;
     });
@@ -343,7 +345,7 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
           textToDisplay='Total trabajado: ' + textToDisplay;
         break;
         case "percentage":
-          textToDisplay = "% "+ value
+          textToDisplay = "% "+ value.toFixed(2)
         break;
       }
       switch (this.group_by) {
