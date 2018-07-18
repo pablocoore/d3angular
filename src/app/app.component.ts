@@ -12,9 +12,12 @@ export class AppComponent implements OnInit {
   horizontalBarData=[35];
 
   chartData2: Array<any>;
+  chartData3: Array<any>;
+
   stackedChartData: Array<any>;
   stackedChartData2: Array<any>;
   stackedChartData3: Array<any>;
+  stackedChartData4: Array<any>;
 
   lineChartData: Array<any>;
   pieChartData: Array<any>;
@@ -24,6 +27,8 @@ export class AppComponent implements OnInit {
 
   x_attr = 'fecha';
   y_attrs = ['percentage_completed', 'percentage_missing'];
+  barWidths=[8,8];
+  limitX=[new Date(), moment().add(150,'d').toDate()]
 
   x= 'x';
   y= 'y';
@@ -31,6 +36,7 @@ export class AppComponent implements OnInit {
   
   format_percentage="percentage";
   false_value=false;
+  true_value=true;
 
   thresholds=[50]
   colors2=['steelblue']
@@ -60,6 +66,7 @@ export class AppComponent implements OnInit {
   generateBarData() {
     this.chartData = [];
     this.chartData2 = [];
+    this.chartData3 = [];
 
     for (let i = 0; i < (8 + Math.floor(Math.random() * 10)); i++) {
       this.chartData.push([
@@ -77,6 +84,16 @@ export class AppComponent implements OnInit {
         }
       );
     }
+
+
+    for (let i = 0; i < (8 + Math.floor(Math.random() * 40)); i++) {
+      this.chartData3.push(
+        {
+          "x": moment().add(i,'d').toDate(),
+          "y":Math.floor(Math.random() * 100)
+        },
+      );
+    }
   }
 
   mostrarClick($event){
@@ -87,6 +104,7 @@ export class AppComponent implements OnInit {
     this.stackedChartData = [];
     this.stackedChartData2 = [];
     this.stackedChartData3 = [];
+    this.stackedChartData4 = [];
 
     for (let i = 0; i < (8 + Math.floor(Math.random() * 40)); i++) {
       this.stackedChartData.push(
@@ -112,13 +130,30 @@ export class AppComponent implements OnInit {
       );
     }
 
-    for (let i = 0; i < (30 + Math.floor(Math.random() * 40)); i++) {
+    for (let i = 0; i < (10 + Math.floor(Math.random() * 15)); i++) {
+      let empty_chunk = Math.floor(Math.random() * 10)
       let total_hours=Math.floor(Math.random() * 40);
       let invoiced_hours=Math.floor(Math.random() * total_hours);
       let percentage = total_hours>0? Math.floor(invoiced_hours/total_hours*100): 0;
       this.stackedChartData3.push(
         {
-          "fecha": moment().add(i*7,'d').toDate(),
+          "fecha": moment().add((i+empty_chunk)*7,'d').toDate(),
+          "percentage_completed":percentage,
+          "percentage_missing":percentage<100? 100-percentage: 0,
+          "Total hours":total_hours,
+          "Invoiced hours":invoiced_hours,
+        },
+      );
+    }
+
+    for (let i = 0; i < (10 + Math.floor(Math.random() * 20)); i++) {
+      let empty_chunk = Math.floor(Math.random() * 15)
+      let total_hours=Math.floor(Math.random() * 40);
+      let invoiced_hours=Math.floor(Math.random() * total_hours);
+      let percentage = total_hours>0? Math.floor(invoiced_hours/total_hours*100): 0;
+      this.stackedChartData4.push(
+        {
+          "fecha": moment().add((i+empty_chunk)*7,'d').toDate(),
           "percentage_completed":percentage,
           "percentage_missing":percentage<100? 100-percentage: 0,
           "Total hours":total_hours,

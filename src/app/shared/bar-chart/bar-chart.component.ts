@@ -1,5 +1,6 @@
 import { Component, OnInit, OnChanges, ViewChild, ElementRef, Input, ViewEncapsulation, ChangeDetectorRef, Output, EventEmitter } from '@angular/core';
 import * as d3 from 'd3';
+import * as moment from 'moment';
 
 @Component({
   selector: 'app-bar-chart',
@@ -16,6 +17,11 @@ export class BarChartComponent implements OnInit, OnChanges {
   @Input() private x ="";
   @Input() private y ="";
 
+  @Input("type-datetime") private typeDatetime = false;
+  @Input('group-by') private group_by: string="day";//day, week, month, year
+  @Input('limit-x-values') private limitXValues :[any, any];//[minX, maxX]
+  @Input('bar-width-limits') private barWidthLimit = [8, 50];
+
   @Input("color-list") private color_list = ['red', 'blue'];
   @Input("threshold-list") private threshold_list: number[] = [];//ordered list of thresholds: [5.4, 27, 45]
   @ViewChild('tooltipElem') private tooltipElem: ElementRef;
@@ -26,11 +32,13 @@ export class BarChartComponent implements OnInit, OnChanges {
 
   @Input('transition-duration') private transitionDuration: number = 200;
   @Output("data-click") dataClick = new EventEmitter();
+  @Input('group-elements') private groupElements: boolean=false;
 
   @Input() public tooltip: any ={x:"", y:"", z: "", top: "0px", left:"0px", opacity:0, extra:[]};
+  @Input() private margin =  { top: 20, bottom: 20, left: 30, right: 20};
+
   public mouse = {x: 0, y: 0};
 
-  private margin: any = { top: 20, bottom: 20, left: 20, right: 20};
   private chart: any;
   private width: number;
   private height: number;
@@ -39,7 +47,7 @@ export class BarChartComponent implements OnInit, OnChanges {
   private colors: any;
   private xAxis: any;
   private yAxis: any;
-
+  private barWidth: number;
   constructor(private ref: ChangeDetectorRef) { }
 
   ngOnInit() {
@@ -56,6 +64,29 @@ export class BarChartComponent implements OnInit, OnChanges {
     }
   }
 
+  groupData() {
+    if (this.groupElements){
+      let grouped_elems = d3.nest()
+        // agrupamos por semana/mes, etc y ponemos en la key los dias
+        .key((d: any) => moment(d[this.x]).startOf(this.group_by as moment.unitOfTime.StartOf).format('YYYY-MM-DD'))
+        .rollup((values) => { // aplicamos la funcion a cada grupo
+          const group: any = {};
+          [this.x].forEach( key => {
+            group[key] = d3.sum(values, (d) =>  d[key]);
+          });
+          return group;
+        })
+        .map(this.data);
+        const grouped_elems_list = grouped_elems.values();
+        const grouped_elems_keys = grouped_elems.keys();
+        this.data = grouped_elems_list.map((elem, i) => {
+          elem[this.x] = moment(grouped_elems_keys[i]).toDate();
+          return elem;
+        });
+        //console.log("group by:", this.group_by)
+        //console.log("grouped data:", this.data)     
+    }
+  }
 
   private isFloat(n){//checking if it's a number and float
       return Number(n) === n && n % 1 !== 0;
@@ -119,7 +150,11 @@ export class BarChartComponent implements OnInit, OnChanges {
       .on('mouseenter', (d, i) => {
         this.highLightSelected(i);
         this.tooltip.y = this.prettyPrint(this.getYElem(d), this.y);
-        this.tooltip.x = this.prettyPrint(this.getXElem(d), this.x);
+        if (this.typeDatetime){
+          this.tooltip.x = d3.timeFormat('%e %B %Y')(this.getXElem(d))
+        }else{
+          this.tooltip.x = this.prettyPrint(this.getXElem(d), this.x);
+        }
         this.setTooltipExtraElems(d);
       })
       .on('mousemove', (d) => {
@@ -143,6 +178,22 @@ export class BarChartComponent implements OnInit, OnChanges {
         this.dataClick.emit(elem);
       });
   }
+  
+  setBarWidth(){
+    if (this.typeDatetime){
+      let cantBars=this.data.length;
+
+      const day1=this.xScale.domain()[0]
+      const day2=moment(day1).add(1,this.group_by as moment.unitOfTime.DurationConstructor);
+      const value_day1=this.xScale(day1)
+      const value_day2=this.xScale(day2)
+      const distBetweenBars=(value_day2-value_day1)*0.85;
+      this.barWidth = Math.max(this.barWidthLimit[0], distBetweenBars);
+      this.barWidth = Math.min(this.barWidth, this.barWidthLimit[1])
+    }else{
+      this.barWidth = this.xScale.bandwidth()
+    }
+  }
 
   createChart() {
     const element = this.chartContainer.nativeElement;
@@ -162,7 +213,28 @@ export class BarChartComponent implements OnInit, OnChanges {
     const yDomain = [0, d3.max(this.data, d => this.getYElem(d))];
 
     // create scales
-    this.xScale = d3.scaleBand().padding(0.1).domain(xDomain).rangeRound([0, this.width]);
+    if (this.typeDatetime){
+      this.xScale = d3.scaleTime().range([0, this.width - 150]);
+      if (this.showXAxis){
+        this.xAxis = svg.append('g')
+          .attr('class', 'axis axis-x')
+          .attr('transform', `translate(${this.margin.left}, ${this.margin.top + this.height})`)
+          .call(d3.axisBottom(this.xScale)
+                  .ticks(d3.timeDay, 2)
+                  .tickFormat(d3.timeFormat('%b %d'))
+          );
+      }
+    }else{
+      this.xScale = d3.scaleBand().padding(0.1).domain(xDomain).rangeRound([0, this.width]);
+      if (this.showXAxis){
+        this.xAxis = svg.append('g')
+          .attr('class', 'axis axis-x')
+          .attr('transform', `translate(${this.margin.left}, ${this.margin.top + this.height})`)
+          .call(d3.axisBottom(this.xScale));
+      }
+    }
+    this.setBarWidth();
+
     this.yScale = d3.scaleLinear().domain(yDomain).range([this.height, 0]);
 
     // bar colors
@@ -174,13 +246,7 @@ export class BarChartComponent implements OnInit, OnChanges {
         .range(<any[]>this.color_list)
     }
 
-    // x & y axis
-    if (this.showXAxis){
-      this.xAxis = svg.append('g')
-        .attr('class', 'axis axis-x')
-        .attr('transform', `translate(${this.margin.left}, ${this.margin.top + this.height})`)
-        .call(d3.axisBottom(this.xScale));
-    }
+    //y axis
     if (this.showYAxis){
       this.yAxis = svg.append('g')
         .attr('class', 'axis axis-y')
@@ -202,7 +268,42 @@ export class BarChartComponent implements OnInit, OnChanges {
 
   updateChart() {
     // update scales & axis
-    this.xScale.domain(this.data.map(d => this.getXElem(d)));
+    let minMaxValues=null;
+    if (this.limitXValues==undefined){
+      minMaxValues = d3.extent(this.data, d => d[this.x]);
+    }else{
+      minMaxValues = this.limitXValues;
+    }
+    //console.log("minMaxValues", minMaxValues)
+    //console.log("this.xScale(new Date('2018-05-25'))", this.xScale(minMaxValues[0]));
+
+    this.xScale.domain(minMaxValues);
+    if (this.typeDatetime){
+      switch (this.group_by) {
+        case 'day':
+          minMaxValues[0] = moment(minMaxValues[0]).startOf('day').subtract(12, 'h');
+          minMaxValues[1] = moment(minMaxValues[1]).endOf('day').add(12, 'h');
+          this.xScale.domain(minMaxValues);
+          if (this.showXAxis) this.xAxis.transition().call(d3.axisBottom(this.xScale).tickFormat(d3.timeFormat('%b %d')));
+        break;
+        case 'week':
+          minMaxValues[0] = moment(minMaxValues[0]).startOf('week').subtract(3, 'd');
+          minMaxValues[1] = moment(minMaxValues[1]).endOf('week').add(3, 'd');
+          this.xScale.domain(minMaxValues);
+          if (this.showXAxis) this.xAxis.transition().call(d3.axisBottom(this.xScale).tickFormat(d3.timeFormat('%b %d')));
+        break;
+        case 'month':
+          minMaxValues[0] = moment(minMaxValues[0]).startOf('month').subtract(2, 'w');
+          minMaxValues[1] = moment(minMaxValues[1]).endOf('month').add(2, 'w');
+          this.xScale.domain(minMaxValues);
+          if (this.showXAxis) this.xAxis.transition().call(d3.axisBottom(this.xScale).ticks(d3.timeMonth, 1).tickFormat(d3.timeFormat('%b-%Y')));
+        break;      
+      }
+    }else{
+      this.xScale.domain(this.data.map(d => this.getXElem(d)));
+    }
+    this.setBarWidth();
+
     this.yScale.domain([0, d3.max(this.data, d => this.getYElem(d))]);
     this.colors.domain([0, this.data.length]);
     if(this.showXAxis){
@@ -222,7 +323,7 @@ export class BarChartComponent implements OnInit, OnChanges {
     this.chart.selectAll('.bar').transition()
       .attr('x', d => this.xScale(this.getXElem(d)))
       .attr('y', d => this.yScale(this.getYElem(d)))
-      .attr('width', d => this.xScale.bandwidth())
+      .attr('width', d => this.barWidth)
       .attr('height', d => this.height - this.yScale(this.getYElem(d)))
       .style('fill', (d, i) => this.barColor(this.getYElem(d),i));
 
@@ -233,7 +334,7 @@ export class BarChartComponent implements OnInit, OnChanges {
       .attr('class', 'bar')
       .attr('x', d => this.xScale(this.getXElem(d)))
       .attr('y', d => this.yScale(0))
-      .attr('width', this.xScale.bandwidth())
+      .attr('width', this.barWidth)
       .attr('height', 0)
       .style('fill', (d, i) => this.barColor(this.getYElem(d),i))
       .transition()

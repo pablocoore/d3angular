@@ -46,6 +46,8 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
   @Input() private data: Array<any>;
   @Input('x') private x_attr: string;
   @Input('ys') private y_attrs: string[]=[];
+  @Input('limit-x-values') private limitXValues :[any, any];//[minX, maxX]
+
   @Input() private showYAxis = true;
   @Input() private showXAxis = true;
   @Input() private showLegend = true;
@@ -56,7 +58,7 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
   @Input('group-elements') private groupElements: boolean=true;
 
   @Input('group-by') private group_by: string="day";//day, week, month, year
-  @Input('min-bar-width') private minBarWidth: number = 8;
+  @Input('bar-width-limits') private barWidthLimit = [8, 50];
   @Input('transition-duration') private transitionDuration: number = 200;
   @Input() private colors: string[] = ['#98abc5', '#8a89a6', '#7b6888', '#6b486b', '#a05d56', '#d0743c', '#ff8c00', "#8595e1", "#b5bbe3", "#e6afb9", "#e07b91", "#d33f6a", "#11c638", "#8dd593", "#c6dec7", "#ead3c6", "#f0b98d", "#ef9708", "#0fcfc0", "#9cded6", "#d5eae7", "#f3e1eb", "#f6c4e1", "#f79cd4"];
   @Output("data-click") dataClick = new EventEmitter();
@@ -65,12 +67,11 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
   @Output("tooltip-text-function") tooltipTextFunctionExtern = new EventEmitter<any>();
 
   @Input("type-datetime") private typeDatetime = true;
-  @Input("format-values") private formatValues = "time";//time/percentage
+  @Input() private margin =  { top: 20, bottom: 20, left: 30, right: 20};
 
+  @Input("format-values") private formatValues = "time";//time/percentage
   
   @Input() public tooltip: any ={x:"", y:"", z: "", top: "0px", left:"0px", opacity:0, extra:[]};
-
-  private margin: any = { top: 20, bottom: 20, left: 30, right: 20};
 
   private chart: any;
   private width = 0;
@@ -143,13 +144,14 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
   
   setBarWidth(){
     let cantBars=this.data.length;
-    let chartArea= this.xScale.range()[1]-150;
-    this.barWidth = Math.max(this.minBarWidth, Math.round(chartArea / cantBars) - 12);
-    if (cantBars<4) {
-        this.barWidth = this.barWidth * 0.6;
-    }else if (cantBars<16) {
-        this.barWidth = this.barWidth * 0.8;
-    }  
+
+    const day1=this.xScale.domain()[0]
+    const day2=moment(day1).add(1,this.group_by as moment.unitOfTime.DurationConstructor);
+    const value_day1=this.xScale(day1)
+    const value_day2=this.xScale(day2)
+    const distBetweenBars=(value_day2-value_day1)*0.85;    
+    this.barWidth = Math.max(this.barWidthLimit[0], distBetweenBars);
+    this.barWidth = Math.min(this.barWidth, this.barWidthLimit[1])
   }
 
   public trackMousePosition($event) {
@@ -174,20 +176,16 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
 
   public highLightSelectedGroup(groupId){
     this.chart.selectAll(".barGroup")
-      .filter((d,j)=> j < groupId)
+//      .filter((d,j)=> j != groupId)
       .transition()
       .duration(this.transitionDuration)
       .style('fill', (d, i) => {
-        const grayscale = d3.scaleLinear().domain([0, 1]).range(<any[]>['#dfdfdf', this.zScale(i-1)]);
-        return grayscale(0.5);
-      });
-      this.chart.selectAll(".barGroup")
-      .filter((d,j)=> j > groupId )
-      .transition()
-      .duration(this.transitionDuration)
-      .style('fill', (d, i) => {
-        const grayscale = d3.scaleLinear().domain([0, 1]).range(<any[]>['#dfdfdf', this.zScale(i+1)]);
-        return grayscale(0.5);
+        if (i!=groupId){
+          const grayscale = d3.scaleLinear().domain([0, 1]).range(<any[]>['#dfdfdf', this.zScale(i)]);
+          return grayscale(0.5);  
+        }else{
+          return this.zScale(i)
+        }
       });
 
       //.style('opacity', 0.5);
@@ -209,7 +207,7 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
     // create scales
     if (this.typeDatetime){
         this.xScale = d3.scaleTime().range([0, this.width - 150]);
-        if (this.showYAxis){
+        if (this.showXAxis){
           this.xAxis = svg.append('g')
             .attr('class', 'axis axis-x')
             .attr('transform', `translate(${this.margin.left}, ${this.margin.top + this.height})`)
@@ -221,7 +219,7 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
         }
     }else{
         this.xScale = d3.scaleBand().padding(0.1).domain(xDomain).rangeRound([0, this.width - 150]);
-        if (this.showYAxis){
+        if (this.showXAxis){
           this.xAxis = svg.append('g')
             .attr('class', 'axis axis-x')
             .attr('transform', `translate(${this.margin.left}, ${this.margin.top + this.height})`)
@@ -411,7 +409,12 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
 
   updateChart() {
       const x_attr = this.x_attr;
-      let minMaxValues = d3.extent(this.data, d => d[x_attr]);
+      let minMaxValues=null;
+      if (this.limitXValues==undefined){
+        minMaxValues = d3.extent(this.data, d => d[x_attr]);
+      }else{
+        minMaxValues = this.limitXValues;
+      }
       //console.log("minMaxValues", minMaxValues)
       //console.log("this.xScale(new Date('2018-05-25'))", this.xScale(minMaxValues[0]));
 
@@ -435,9 +438,8 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
             minMaxValues[1] = moment(minMaxValues[1]).endOf('month').add(2, 'w');
             this.xScale.domain(minMaxValues);
             if (this.showXAxis) this.xAxis.transition().call(d3.axisBottom(this.xScale).ticks(d3.timeMonth, 1).tickFormat(d3.timeFormat('%b-%Y')));
-          break;
+          break;      
         }
-
         this.setBarWidth();
       }
       this.yScale.domain([0, d3.max(this.data, (d: any) => d.total)]).nice();
