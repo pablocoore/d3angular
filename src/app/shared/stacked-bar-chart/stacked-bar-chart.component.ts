@@ -81,7 +81,7 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
   private zScale: any;
   private xAxis: any;
   private yAxis: any;
-
+  private legendSpace=0;
   public mouse = {x: 0, y: 0};
   private keys = [];
   private barWidth = 0;
@@ -134,7 +134,7 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
       v.total = this.keys.map(key => v[key]).reduce((a, b) => a + b, 0);
       return v;
     });
-
+    this.showLegend ? this.legendSpace=150: this.legendSpace=0;
     //this.setBarWidth();
 
     if (this.chart) {
@@ -206,7 +206,7 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
 
     // create scales
     if (this.typeDatetime){
-        this.xScale = d3.scaleTime().range([0, this.width - 150]);
+        this.xScale = d3.scaleTime().range([0, this.width - this.legendSpace]);
         if (this.showXAxis){
           this.xAxis = svg.append('g')
             .attr('class', 'axis axis-x')
@@ -218,7 +218,7 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
             this.setBarWidth();
         }
     }else{
-        this.xScale = d3.scaleBand().padding(0.1).domain(xDomain).rangeRound([0, this.width - 150]);
+        this.xScale = d3.scaleBand().padding(0.1).domain(xDomain).rangeRound([0, this.width - this.legendSpace]);
         if (this.showXAxis){
           this.xAxis = svg.append('g')
             .attr('class', 'axis axis-x')
