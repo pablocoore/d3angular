@@ -13,6 +13,15 @@ div.tooltip-chart>p{
     margin: 0px 0px;
 }
 
-.d3-chart .axis path, .d3-chart .axis line {
+svg .axis path, .d3-chart .axis line {
+    stroke: #999;
+}   
+svg .axis text {
+    fill: #999; 
+}
+.tick line{
     stroke: #dfdfdf;
+}
+svg .axis path, .d3-chart .axis line {
+    stroke: #999;
 }

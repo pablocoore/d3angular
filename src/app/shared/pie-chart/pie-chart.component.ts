@@ -202,6 +202,7 @@ export class PieChartComponent implements OnInit, OnChanges {
       elem['pertcent'] = (d.endAngle -d.startAngle)/(2*Math.PI)*100;
       elem[this.x] = d.data[this.x];
       elem[this.y] = d.data[this.y];
+      elem['data'] = d.data;  
       this.dataClick.emit(elem);
     });
   }
