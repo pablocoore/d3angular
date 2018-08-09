@@ -17,6 +17,7 @@ export class BarChartComponent implements OnInit, OnChanges {
   @Input() private x ="";
   @Input() private y ="";
 
+  @Input("format-values") private formatValues = "none"; //values are "percent", "SI prefix", "duration", "none"
   @Input("type-datetime") private typeDatetime = false;
   @Input('group-by') private group_by: string="day";//day, week, month, year
   @Input('limit-x-values') private limitXValues :[any, any];//[minX, maxX]
@@ -35,7 +36,7 @@ export class BarChartComponent implements OnInit, OnChanges {
   @Input('group-elements') private groupElements: boolean=false;
 
   @Input() public tooltip: any ={x:"", y:"", z: "", top: "0px", left:"0px", opacity:0, extra:[]};
-  @Input() private margin =  { top: 20, bottom: 20, left: 30, right: 20};
+  @Input() private margin =  { top: 20, bottom: 20, left: 50, right: 20};
 
   public mouse = {x: 0, y: 0};
 
@@ -48,9 +49,21 @@ export class BarChartComponent implements OnInit, OnChanges {
   private xAxis: any;
   private yAxis: any;
   private barWidth: number;
+  private horizontalTickN =0;
+  private axisFormat
+  private offsetChart =30;
   constructor(private ref: ChangeDetectorRef) { }
 
   ngOnInit() {
+    //set n of horizontal ticks
+    this.horizontalTickN=Math.min(this.data.length, 20);
+    //normalize data
+    if (this.formatValues=='percent'){
+      let max_value=d3.max(this.data, (d: any) => this.getYElem(d))
+      if (max_value>1){
+        this.normalizeValues(max_value);
+      }
+    }
     this.createChart();
     if (this.data) {
       this.updateChart();
@@ -60,31 +73,29 @@ export class BarChartComponent implements OnInit, OnChanges {
   // (with animation) when the data changes
   ngOnChanges() {
     if (this.chart) {
+      //set n of horizontal ticks
+      this.horizontalTickN=Math.min(this.data.length, 20);
+      //normalize data
+      if (this.formatValues=='percent'){
+        let max_value=d3.max(this.data, (d: any) => this.getYElem(d))
+        if (max_value>1){
+          this.normalizeValues(max_value);
+        }
+      }
       this.updateChart();
     }
   }
 
-  groupData() {
-    if (this.groupElements){
-      let grouped_elems = d3.nest()
-        // agrupamos por semana/mes, etc y ponemos en la key los dias
-        .key((d: any) => moment(d[this.x]).startOf(this.group_by as moment.unitOfTime.StartOf).format('YYYY-MM-DD'))
-        .rollup((values) => { // aplicamos la funcion a cada grupo
-          const group: any = {};
-          [this.x].forEach( key => {
-            group[key] = d3.sum(values, (d) =>  d[key]);
-          });
-          return group;
-        })
-        .map(this.data);
-        const grouped_elems_list = grouped_elems.values();
-        const grouped_elems_keys = grouped_elems.keys();
-        this.data = grouped_elems_list.map((elem, i) => {
-          elem[this.x] = moment(grouped_elems_keys[i]).toDate();
+  private normalizeValues(maxValue){
+    if (this.data.length>0){
+        this.data=this.data.map(elem=> {
+          if (this.y!=''){
+            elem[this.y]=elem[this.y]/(maxValue)
+          }else{
+            elem[1]=elem[1]/(maxValue);
+          }
           return elem;
-        });
-        //console.log("group by:", this.group_by)
-        //console.log("grouped data:", this.data)     
+        })
     }
   }
 
@@ -181,8 +192,6 @@ export class BarChartComponent implements OnInit, OnChanges {
   
   setBarWidth(){
     if (this.typeDatetime){
-      let cantBars=this.data.length;
-
       const day1=this.xScale.domain()[0]
       const day2=moment(day1).add(1,this.group_by as moment.unitOfTime.DurationConstructor);
       const value_day1=this.xScale(day1)
@@ -206,7 +215,7 @@ export class BarChartComponent implements OnInit, OnChanges {
     // chart plot area
     this.chart = svg.append('g')
       .attr('class', 'bars')
-      .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`);
+      .attr('transform', `translate(${this.margin.left+ this.offsetChart}, ${this.margin.top})`);
 
     // define X & Y domains
     const xDomain = this.data.map(d => this.getXElem(d));
@@ -218,7 +227,7 @@ export class BarChartComponent implements OnInit, OnChanges {
       if (this.showXAxis){
         this.xAxis = svg.append('g')
           .attr('class', 'axis axis-x')
-          .attr('transform', `translate(${this.margin.left}, ${this.margin.top + this.height})`)
+          .attr('transform', `translate(${this.margin.left+this.offsetChart}, ${this.margin.top + this.height})`)
           .call(d3.axisBottom(this.xScale)
                   .ticks(d3.timeDay, 2)
                   .tickFormat(d3.timeFormat('%b %d'))
@@ -229,7 +238,7 @@ export class BarChartComponent implements OnInit, OnChanges {
       if (this.showXAxis){
         this.xAxis = svg.append('g')
           .attr('class', 'axis axis-x')
-          .attr('transform', `translate(${this.margin.left}, ${this.margin.top + this.height})`)
+          .attr('transform', `translate(${this.margin.left+this.offsetChart}, ${this.margin.top + this.height})`)
           .call(d3.axisBottom(this.xScale));
       }
     }
@@ -246,12 +255,31 @@ export class BarChartComponent implements OnInit, OnChanges {
         .range(<any[]>this.color_list)
     }
 
+    
     //y axis
+    this.axisFormat=d3.axisLeft(this.yScale);
+    switch (this.formatValues) {
+      case "none":
+      break;
+      case "percent":
+        this.axisFormat=this.axisFormat.tickFormat(d3.format('.0%'))
+      break;
+      case "SI prefix":
+        this.axisFormat=this.axisFormat.tickFormat(d3.format('.0s'))
+      break;
+      case "duration":
+        this.axisFormat=this.axisFormat.tickFormat((n:number)=>{
+        })
+      break;
+      default:
+        break;
+    }
+    
     if (this.showYAxis){
       this.yAxis = svg.append('g')
         .attr('class', 'axis axis-y')
-        .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
-        .call(d3.axisLeft(this.yScale));
+        .attr('transform', `translate(${this.margin.left+ this.offsetChart}, ${this.margin.top})`)
+        .call(this.axisFormat);
     }
   }
   barColor(data, index){
@@ -310,7 +338,14 @@ export class BarChartComponent implements OnInit, OnChanges {
       this.xAxis.transition().call(d3.axisBottom(this.xScale));
     }
     if (this.showYAxis){
-      this.yAxis.transition().call(d3.axisLeft(this.yScale));
+      this.yAxis.transition().call(()=>{
+        this.axisFormat
+        d3.select(this.chartContainer.nativeElement)
+        .select(".axis-y")
+        .selectAll('.tick > text')
+        .attr("dx", "2em")
+        .attr("x", "-30")
+      });
     }
 
     const update = this.chart.selectAll('.bar')
@@ -345,5 +380,8 @@ export class BarChartComponent implements OnInit, OnChanges {
     if (this.enableTooltips){
       this.barEvents();
     }
+    
+
+
   }
 }

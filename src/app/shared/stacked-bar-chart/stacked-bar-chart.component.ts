@@ -47,6 +47,8 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
   @Input('x') private x_attr: string;
   @Input('ys') private y_attrs: string[]=[];
   @Input('limit-x-values') private limitXValues :[any, any];//[minX, maxX]
+  //@Input("format-values") private formatValues = "time";//time/percentage
+  @Input("format-values") private formatValues = "duration"; //values are "percent", "SI prefix", "duration", "none"
 
   @Input() private showYAxis = true;
   @Input() private showXAxis = true;
@@ -69,7 +71,6 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
   @Input("type-datetime") private typeDatetime = true;
   @Input() private margin =  { top: 20, bottom: 20, left: 30, right: 20};
 
-  @Input("format-values") private formatValues = "time";//time/percentage
   
   @Input() public tooltip: any ={x:"", y:"", z: "", top: "0px", left:"0px", opacity:0, extra:[]};
 
@@ -85,6 +86,9 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
   public mouse = {x: 0, y: 0};
   private keys = [];
   private barWidth = 0;
+  private horizontalTickN =0;
+  private axisFormat
+  private offsetChart =30;
   constructor(private ref: ChangeDetectorRef) { }
 
   ngOnInit() {
@@ -138,10 +142,32 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
     //this.setBarWidth();
 
     if (this.chart) {
+      this.horizontalTickN=Math.min(this.data.length, 20);
+      if (this.formatValues=='percent'){
+        let max_value=d3.max(this.data, (d: any) => 2/*this.getYElem(d)*/)
+        if (max_value>1){
+          this.normalizeValues(max_value);
+        }
+      }
       this.updateChart();
     }
   }
   
+  private normalizeValues(maxValue){
+    if (this.data.length>0){
+        this.data=this.data.map(elem=> {
+          debugger
+          /*if (this.y!=''){
+
+            elem[this.y]=elem[this.y]/(maxValue)
+          }else{
+            elem[1]=elem[1]/(maxValue);
+          }
+          return elem;*/
+        })
+    }
+  }
+
   setBarWidth(){
     let cantBars=this.data.length;
 
@@ -210,7 +236,7 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
         if (this.showXAxis){
           this.xAxis = svg.append('g')
             .attr('class', 'axis axis-x')
-            .attr('transform', `translate(${this.margin.left}, ${this.margin.top + this.height})`)
+            .attr('transform', `translate(${this.margin.left+this.offsetChart}, ${this.margin.top + this.height})`)
             .call(d3.axisBottom(this.xScale)
                     .ticks(d3.timeDay, 2)
                     .tickFormat(d3.timeFormat('%b %d'))
@@ -222,7 +248,7 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
         if (this.showXAxis){
           this.xAxis = svg.append('g')
             .attr('class', 'axis axis-x')
-            .attr('transform', `translate(${this.margin.left}, ${this.margin.top + this.height})`)
+            .attr('transform', `translate(${this.margin.left+this.offsetChart}, ${this.margin.top + this.height})`)
             .call(d3.axisBottom(this.xScale));
         }
         this.barWidth=this.xScale.bandwidth();
@@ -233,17 +259,48 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
     this.zScale = d3.scaleOrdinal()
       .range(this.colors);
     // y axis
+    this.axisFormat=d3.axisLeft(this.yScale);
+    switch (this.formatValues) {
+      case "none":
+      break;
+      case "percent":
+        this.axisFormat=this.axisFormat.tickFormat(d3.format('.0%'))
+      break;
+      case "SI prefix":
+        this.axisFormat=this.axisFormat.tickFormat(d3.format('.0s'))
+      break;
+      case "duration":
+        this.axisFormat=this.axisFormat.tickFormat((n:number)=>{
+          return this.prettyPrintDuration(n)
+        })
+      break;
+      default:
+        break;
+    }
+
     if (this.showYAxis){
       this.yAxis = svg.append('g')
       .attr('class', 'axis axis-y')
       .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
-      .call(d3.axisLeft(this.yScale));
+      .call(this.axisFormat);
     }
 
     // chart plot area
     this.chart = svg.append('g')
       .attr('class', 'chartArea')
-      .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`);
+      .attr('transform', `translate(${this.margin.left+this.offsetChart}, ${this.margin.top})`);
+  }
+
+  private prettyPrintDuration(duration){
+    let textToDisplay="";
+    const durationHS = moment.duration(duration, 'h');
+    const days = durationHS.days();
+    const total_hours= (durationHS.hours()+days*24);
+    //textToDisplay += durationHS.days() > 0 ? durationHS.days() + 'd ' : '';
+    textToDisplay += total_hours > 0 ? total_hours + 'h' : '';
+    textToDisplay += total_hours > 1 ? 's' : ''; // si es mas de una hora se transforma a plural
+    textToDisplay += durationHS.minutes() > 0 ?  ' ' + durationHS.minutes() + 'm' : '';
+    return textToDisplay
   }
 
   private drawBars(dataToDraw) {
@@ -319,6 +376,7 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
     }
   }
 
+
   private tooltipTextFunction(elem, value){
     let extra=[]
     if (this.showObjectDataOnTooltip){
@@ -332,17 +390,10 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
       let textToDisplay = '';
       let tooltipHeader = '';
       switch (this.formatValues) {
-        case "time":
-          const durationHS = moment.duration(value, 'h');
-          const days = durationHS.days();
-          
-          textToDisplay += durationHS.days() > 0 ? durationHS.days() + 'd ' : '';
-          textToDisplay += durationHS.hours() > 0 ? durationHS.hours() + 'h' : '';
-          textToDisplay += durationHS.hours() > 1 ? 's' : ''; // si es mas de una hora se transforma a plural
-          textToDisplay += durationHS.minutes() > 0 ?  ' ' + durationHS.minutes() + 'm' : '';
-          textToDisplay='Total trabajado: ' + textToDisplay;
+        case "duration":         
+          textToDisplay='Total trabajado: ' + this.prettyPrintDuration(value);
         break;
-        case "percentage":
+        case "percent":
           textToDisplay = "% "+ value.toFixed(2)
         break;
       }
@@ -446,7 +497,7 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
 
       if (this.showYAxis){
         this.yAxis.transition().call(() => {
-          d3.axisLeft(this.yScale);
+          this.axisFormat;
           this.yAxis.select('.domain').remove();
           this.yAxis.selectAll('line').attr('x2', this.xScale(minMaxValues[1]) * 0.9);
         });
@@ -466,6 +517,17 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
 
       //generamos tooltip
       this.barEvents();
+
+      d3.select(this.chartContainer.nativeElement)
+        .select(".axis-y")
+        .selectAll('.tick > text')
+        .attr("dx", "2em")
+      
+      d3.select(this.chartContainer.nativeElement)
+        .select(".axis-y")
+        .selectAll('.tick > line')
+        .attr("x1", "15")
+     // .attr("dy", "-2em")
     }
 
 }

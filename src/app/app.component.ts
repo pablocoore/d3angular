@@ -10,7 +10,7 @@ import * as moment from 'moment';
 export class AppComponent implements OnInit {
   chartData: Array<any>;
   horizontalBarData=[35];
-
+  yFormat="percent"
   chartData2: Array<any>;
   chartData3: Array<any>;
 
