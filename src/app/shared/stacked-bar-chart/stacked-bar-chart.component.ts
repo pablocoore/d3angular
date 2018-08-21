@@ -94,6 +94,17 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
   ngOnInit() {
     if (this.data) {
       this.createChart();
+      if (this.data.length<5){
+        this.horizontalTickN=this.data.length;
+      }else{
+        
+      }
+      if (this.formatValues=='percent'){
+        let max_value=d3.max(this.data, (d: any) => 2/*this.getYElem(d)*/)
+        if (max_value>1){
+          this.normalizeValues(max_value);
+        }
+      }
       this.updateChart();
     }
   }
@@ -156,7 +167,7 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
   private normalizeValues(maxValue){
     if (this.data.length>0){
         this.data=this.data.map(elem=> {
-          debugger
+
           /*if (this.y!=''){
 
             elem[this.y]=elem[this.y]/(maxValue)
@@ -169,8 +180,6 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
   }
 
   setBarWidth(){
-    let cantBars=this.data.length;
-
     const day1=this.xScale.domain()[0]
     const day2=moment(day1).add(1,this.group_by as moment.unitOfTime.DurationConstructor);
     const value_day1=this.xScale(day1)
@@ -476,7 +485,14 @@ export class StackedBarChartComponent implements OnInit, OnChanges {
             minMaxValues[0] = moment(minMaxValues[0]).startOf('day').subtract(12, 'h');
             minMaxValues[1] = moment(minMaxValues[1]).endOf('day').add(12, 'h');
             this.xScale.domain(minMaxValues);
-            if (this.showXAxis) this.xAxis.transition().call(d3.axisBottom(this.xScale).tickFormat(d3.timeFormat('%b %d')));
+  
+            if (this.showXAxis){
+              if (this.data.length<5){
+                this.xAxis.transition().call(d3.axisBottom(this.xScale).tickFormat(d3.timeFormat('%b %d')).ticks(d3.timeDay.every(1)));
+              }else{
+                this.xAxis.transition().call(d3.axisBottom(this.xScale).tickFormat(d3.timeFormat('%b %d')));
+              }
+            } 
           break;
           case 'week':
             minMaxValues[0] = moment(minMaxValues[0]).startOf('week').subtract(3, 'd');
