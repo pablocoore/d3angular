@@ -9,12 +9,14 @@
 <app-bar-chart style="width:800px; height: 400px"
                 *ngIf="chartData2"
                 [data]="chartData2"
-                [showYAxis]="false_value"
+                [showXAxis]="false_value"
                 [color-list]="colors2"
                 [enable-tooltip]="enableTooltip"
                 [x]="x"
-                [y]="y"
-                [show-object-data-on-tooltip]="showExtraData">
+                [ys]="y"
+                [percentage-values]="y"
+                [show-object-data-on-tooltip]="showExtraData"
+                [horizontalBars]="true_value">
 </app-bar-chart>
 
 <app-bar-chart style="width:800px; height: 400px" 
@@ -27,7 +29,7 @@
              [threshold-list]="thresholds"
              [enable-tooltip]="enableTooltip"
              [x]="x"
-             [y]="y"
+             [ys]="y"
              [show-object-data-on-tooltip]="showExtraData" >
 </app-bar-chart>
 

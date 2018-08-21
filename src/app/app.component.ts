@@ -31,7 +31,7 @@ export class AppComponent implements OnInit {
   limitX=[new Date(), moment().add(150,'d').toDate()]
 
   x= 'x';
-  y= 'y';
+  y= ['y'];
   showExtraData='showExtraData';
   
   format_percentage="percentage";
