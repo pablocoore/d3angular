@@ -162,9 +162,9 @@ export class BarChartComponent  extends BaseChart implements OnInit, OnChanges {
     // update existing bars
     this.chart.selectAll('.bar').transition()
       .attr('x', d => this.horizontalBars? this.xScale(0):this.xScale(this.getXElem(d)))
-      .attr('y', d => this.horizontalBars? this.yScale(this.getXElem(d)):this.yScale(0))
-      .attr('width', d => this.horizontalBars? this.xScale(this.getYElem(d)):this.barWidth)
-      .attr('height', d => this.horizontalBars? this.barWidth:this.height - this.yScale(this.getYElem(d)))
+      .attr('y', d => this.horizontalBars? this.yScale(this.getXElem(d)): this.yScale(this.getYElem(d)))
+      .attr('height', d => this.horizontalBars? this.barWidth: this.height - this.yScale(this.getYElem(d)))
+      .attr('width', d => this.horizontalBars? this.xScale(this.getYElem(d)):this.barWidth )
       .style('fill', (d, i) => this.barColor(this.getYElem(d),i));
     // add new bars
     update

@@ -58,6 +58,10 @@ export class StackedBarChartComponent extends BaseChart implements OnInit, OnCha
    }
 
   ngOnInit() {
+    if (this.horizontalBars){
+      throw "horizontalBars is not implemented in stacked bar chart"
+    }
+
     if (this.data) {
       this.createChart();
       if (this.data.length<5){
