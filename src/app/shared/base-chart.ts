@@ -52,7 +52,7 @@ export abstract class BaseChart {
     @Input('show-object-data-on-tooltip') protected showObjectDataOnTooltip = false;
     @Output("data-click") dataClick = new EventEmitter();
     @Input("type-datetime") protected typeDatetime = false;
-
+    @Input() protected offsetChart = 30;
 
     chart: any;
     width = 0;
@@ -64,7 +64,6 @@ export abstract class BaseChart {
     yAxis: any;
     barWidth = 0;
     axisFormat
-    offsetChart = 30;
     horizontalTickN = 0;
     legendSpace = 0;
     public mouse = { x: 0, y: 0 };
