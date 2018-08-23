@@ -136,23 +136,12 @@ export class BarChartComponent  extends BaseChart implements OnInit, OnChanges {
 
   updateChart() {
     // update scales & axis
+    this.getDomainMinMax();
+    this.updateWidthAndHeight();
     this.updateTicksAndScales()
     this.colorScale.domain([0, this.data.length]);
+    this.formatAxis()
     
-    if(this.showXAxis){
-      this.xAxis.transition().call(d3.axisBottom(this.xScale));
-    }
-    if (this.showYAxis){
-      this.yAxis.transition().call(()=>{
-        this.axisFormat
-        d3.select(this.chartContainer.nativeElement)
-        .select(".axis-y")
-        .selectAll('.tick > text')
-        .attr("dx", "2em")
-        .attr("x", "-30")
-      });
-    }
-
     const update = this.chart.selectAll('.bar')
       .data(this.data);
 

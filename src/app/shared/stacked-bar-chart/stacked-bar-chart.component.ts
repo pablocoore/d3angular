@@ -45,7 +45,8 @@ export class StackedBarChartComponent extends BaseChart implements OnInit, OnCha
   @Input("format-values") protected formatValues = "duration"; //values are "percent", "SI prefix", "duration", "none"
   @Input("type-datetime") protected typeDatetime = true;
   @Input() private colors: string[] = ['#98abc5', '#8a89a6', '#7b6888', '#6b486b', '#a05d56', '#d0743c', '#ff8c00', "#8595e1", "#b5bbe3", "#e6afb9", "#e07b91", "#d33f6a", "#11c638", "#8dd593", "#c6dec7", "#ead3c6", "#f0b98d", "#ef9708", "#0fcfc0", "#9cded6", "#d5eae7", "#f3e1eb", "#f6c4e1", "#f79cd4"];
-  
+  @Input() protected showYAxisLine = false;
+
   @Input('override-tooltip-function') private overrideTooltipFunction: boolean = false;
   @Output("tooltip-text-function") tooltipTextFunctionExtern = new EventEmitter<any>();
 
@@ -319,29 +320,15 @@ export class StackedBarChartComponent extends BaseChart implements OnInit, OnCha
 
   updateChart() {
       const x = this.x;
-      let minMaxValues=this.updateTicksAndScales();
+      this.getDomainMinMax();
+      this.updateWidthAndHeight();
+      this.updateTicksAndScales();
+      this.formatAxis()
       this.colorScale.domain([0, this.keys.length]);
-
-      if (this.showYAxis){
-        this.yAxis.transition().call(() => {
-          this.axisFormat;
-          this.yAxis.select('.domain').remove();
-          this.yAxis.selectAll('line').attr('x2', this.xScale(minMaxValues[1]));
-
-          d3.select(this.chartContainer.nativeElement)
-          .select(".axis-y")
-          .selectAll('.tick > text')
-          .attr("dx", "2em")
-          .attr("x", "-30")
-        });
-      }
       
       // update scales & axis
-      //console.log("this.keys", this.keys)
       const stackedDataByKeys = d3.stack().keys(this.keys)(this.data);
-      //console.log("stackedDataByKeys", stackedDataByKeys)
 
-      //console.log("d3.axisBottom().ticks().length", d3.axisBottom().ticks().length)
       this.drawBars(stackedDataByKeys)
   
       // generamos la leyenda

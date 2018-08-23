@@ -75,7 +75,7 @@ export class AppComponent implements OnInit {
       ]);
     }
 
-    for (let i = 0; i < (30 + Math.floor(Math.random() * 30)); i++) {
+    for (let i = 0; i < (8 + Math.floor(Math.random() * 17)); i++) {
       this.chartData2.push({
           x:`Index ${i}`,
           y:Math.floor(Math.random() * 100),
