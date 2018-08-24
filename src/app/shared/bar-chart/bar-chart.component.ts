@@ -138,10 +138,10 @@ export class BarChartComponent  extends BaseChart implements OnInit, OnChanges {
     // update scales & axis
     this.getDomainMinMax();
     this.updateWidthAndHeight();
-    this.updateTicksAndScales()
+    this.updateScalesDomain()
     this.colorScale.domain([0, this.data.length]);
     this.formatAxis()
-    
+
     const update = this.chart.selectAll('.bar')
       .data(this.data);
 

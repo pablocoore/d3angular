@@ -67,6 +67,7 @@
 
 <app-stacked-bar-chart style="width:800px; height: 400px"
                         *ngIf="stackedChartData2"
+                        [fixedSize]="false_value"
                         [group-by]="groupByMonth"
                         [data]="stackedChartData2"
                         (data-click)="mostrarClick($event)"

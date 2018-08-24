@@ -19,6 +19,7 @@ svg .axis path, .d3-chart .axis line {
 svg .axis text {
     fill: #999; 
 }
+
 .tick line{
     stroke: #dfdfdf;
 }

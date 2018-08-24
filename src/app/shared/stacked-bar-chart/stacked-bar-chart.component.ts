@@ -46,6 +46,7 @@ export class StackedBarChartComponent extends BaseChart implements OnInit, OnCha
   @Input("type-datetime") protected typeDatetime = true;
   @Input() private colors: string[] = ['#98abc5', '#8a89a6', '#7b6888', '#6b486b', '#a05d56', '#d0743c', '#ff8c00', "#8595e1", "#b5bbe3", "#e6afb9", "#e07b91", "#d33f6a", "#11c638", "#8dd593", "#c6dec7", "#ead3c6", "#f0b98d", "#ef9708", "#0fcfc0", "#9cded6", "#d5eae7", "#f3e1eb", "#f6c4e1", "#f79cd4"];
   @Input() protected showYAxisLine = false;
+  @Input() protected fixedSize = true;
 
   @Input('override-tooltip-function') private overrideTooltipFunction: boolean = false;
   @Output("tooltip-text-function") tooltipTextFunctionExtern = new EventEmitter<any>();
@@ -120,7 +121,7 @@ export class StackedBarChartComponent extends BaseChart implements OnInit, OnCha
       v.total = this.keys.map(key => v[key]).reduce((a, b) => a + b, 0);
       return v;
     });
-    this.showLegend ? this.legendSpace=150: this.legendSpace=0;
+    this.showLegend ? this.legendSpace=75: this.legendSpace=0;
     //this.setBarWidth();
 
     if (this.chart) {
@@ -217,13 +218,13 @@ export class StackedBarChartComponent extends BaseChart implements OnInit, OnCha
       .attr('transform', (d, i) => 'translate(0,' + i * 20 + ')');
   
       legend.append('rect')
-          .attr('x', this.width - 19)
+          .attr('x', this.width +this.margin.left*0.7- 19)
           .attr('width', 19)
           .attr('height', 19)
           .attr('fill', (d, i) => this.colorScale(i));
   
       legend.append('text')
-          .attr('x', this.width - 24)
+          .attr('x', this.width +this.margin.left*0.7- 24)
           .attr('y', 9.5)
           .attr('dy', '0.32em')
           .text(d => d.key);
@@ -322,7 +323,7 @@ export class StackedBarChartComponent extends BaseChart implements OnInit, OnCha
       const x = this.x;
       this.getDomainMinMax();
       this.updateWidthAndHeight();
-      this.updateTicksAndScales();
+      this.updateScalesDomain();
       this.formatAxis()
       this.colorScale.domain([0, this.keys.length]);
       

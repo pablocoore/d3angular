@@ -42,7 +42,7 @@ export abstract class BaseChart {
     @Input('enable-tooltip') protected enableTooltips = true;
 
     @Input() public tooltip: any = { x: "", y: "", z: "", top: "0px", left: "0px", opacity: 0, extra: [] };
-    @Input() protected margin = { top: 20, bottom: 20, left: 50, right: 20 };
+    @Input() protected margin = { top: 20, bottom: 20, left: 20, right: 20 };
     //@Input("format-values") protected formatValues = "duration"; //values are "percent", "SI prefix", "duration", "none"
 
     @Input('limit-x-values') protected limitXValues: [any, any];//[minX, maxX]
@@ -53,11 +53,12 @@ export abstract class BaseChart {
     @Output("data-click") dataClick = new EventEmitter();
     @Input("type-datetime") protected typeDatetime = false;
     @Input() protected showYAxisLine = true;
+    @Input() protected fixedSize = false;
 
-    @Input() protected offsetChart = 30;
+    //@Input() protected offsetChart = 0;
     @Input() protected distanceBetweenBars = 5;
-    @Input() protected minChartWidth = 200;
-    @Input() protected minChartHeight = 200;
+    @Input() protected minChartWidth = 350;
+    @Input() protected minChartHeight = 350;
 
     chart: any;
     width = 0;
@@ -71,10 +72,25 @@ export abstract class BaseChart {
     axisFormat
     horizontalTickN = 0;
     legendSpace = 0;
-    codomainMinMax:[any,any];
+    codomainMinMax: [any, any];
 
     public mouse = { x: 0, y: 0 };
 
+    initMargins() {
+        if (this.horizontalBars || (this.typeDatetime && this.showYAxis)) {
+            this.margin.left = Math.max(this.margin.left, 85)
+        }else if (this.showYAxis){
+            this.margin.left = Math.max(this.margin.left, 40)
+        }
+
+        if (this.typeDatetime){
+            if (this.horizontalBars){
+                this.margin.bottom = this.margin.bottom +this.barWidthLimit[1]*0.8 
+            }else{
+                this.margin.right = this.margin.right +this.barWidthLimit[1]*0.8 
+            }
+        }
+    }
 
     normalizeValues(maxValue) {
         if (this.data.length > 0) {
@@ -148,7 +164,7 @@ export abstract class BaseChart {
         }
     }
 
-    isFloat(n){//checking if it's a number and float
+    isFloat(n) {//checking if it's a number and float
         return Number(n) === n && n % 1 !== 0;
     }
 
@@ -160,63 +176,52 @@ export abstract class BaseChart {
         return iniString + (this.isFloat(value) ? value.toFixed(2) : value);
     }
 
-    updateWidthAndHeight(){
-        if (this.typeDatetime) return;
-        let chartWidthArea = this.chartContainer.nativeElement.offsetWidth - this.margin.left - this.margin.right;
-        let chartHeigthArea = this.chartContainer.nativeElement.offsetHeight - this.margin.top - this.margin.bottom;
-        this.height= chartHeigthArea;
-        this.width= chartWidthArea;
-        if (this.horizontalBars){
-            this.height = Math.min(this.data.length*this.barWidthLimit[1] + (this.data.length-1)*this.distanceBetweenBars, this.height);
-            this.height = Math.max(this.height, this.minChartHeight)
-        }else{
-            this.width = Math.min(this.data.length*this.barWidthLimit[1] + (this.data.length-1)*this.distanceBetweenBars, this.width);
-            this.width = Math.max(this.width, this.minChartWidth)
+    updateWidthAndHeight() {
+        // if (this.typeDatetime) return;
+        if (!this.fixedSize) {
+            let chartWidthArea = this.chartContainer.nativeElement.offsetWidth - this.margin.left - this.margin.right;
+            let chartHeigthArea = this.chartContainer.nativeElement.offsetHeight - this.margin.top - this.margin.bottom;
+            this.height = chartHeigthArea;
+            this.width = chartWidthArea;
+            if (this.horizontalBars) {
+                this.height = Math.min(this.data.length * this.barWidthLimit[1] + (this.data.length - 1) * this.distanceBetweenBars, this.height);
+                this.height = Math.max(this.height, this.minChartHeight)
+            } else {
+                this.width = Math.min(this.data.length * this.barWidthLimit[1] + (this.data.length - 1) * this.distanceBetweenBars, this.width);
+                this.width = Math.max(this.width, this.minChartWidth)
+            }
         }
+
         d3.select(this.chartContainer.nativeElement).select('svg')
-            .attr('width', this.width+this.margin.left+this.margin.right)
-            .attr('height', this.height+this.margin.bottom+this.margin.top);
-        this.xScale.rangeRound([0, this.width])
+            .attr('width', this.width + this.margin.left + this.margin.right)
+            .attr('height', this.height + this.margin.bottom + this.margin.top);
+
         this.yScale.rangeRound([this.height, 0])
+        this.xScale.rangeRound([0, this.width - this.legendSpace])
+
     }
 
-    getDomainMinMax(){
+    getDomainMinMax() {
         if (this.limitXValues == undefined) {
             this.codomainMinMax = d3.extent(this.data, d => d[this.x]);
         } else {
             this.codomainMinMax = this.limitXValues;
         }
     }
-    
-    updateTicksAndScales(){
-        let scaleElem,scaleElem2, axisElem
-        if (this.horizontalBars){
-            scaleElem=this.yScale.domain(this.codomainMinMax);
-            axisElem=this.yAxis;
-            scaleElem2=this.xScale;
-        }else{
-            scaleElem=this.xScale.domain(this.codomainMinMax);
-            axisElem=this.xAxis;
-            scaleElem2=this.yScale;
+
+    updateScalesDomain() {
+        let scaleElem, scaleElem2, axisElem
+        if (this.horizontalBars) {
+            scaleElem = this.yScale.domain(this.codomainMinMax);
+            axisElem = this.yAxis;
+            scaleElem2 = this.xScale;
+        } else {
+            scaleElem = this.xScale.domain(this.codomainMinMax);
+            axisElem = this.xAxis;
+            scaleElem2 = this.yScale;
         }
         if (this.typeDatetime) {
-            switch (this.group_by) {
-                case 'day':
-                    this.codomainMinMax[0] = moment(this.codomainMinMax[0]).startOf('day').subtract(12, 'h');
-                    this.codomainMinMax[1] = moment(this.codomainMinMax[1]).endOf('day').add(12, 'h');
-                    scaleElem.domain(this.codomainMinMax);
-                    break;
-                case 'week':
-                    this.codomainMinMax[0] = moment(this.codomainMinMax[0]).startOf('week').subtract(3, 'd');
-                    this.codomainMinMax[1] = moment(this.codomainMinMax[1]).endOf('week').add(3, 'd');
-                    scaleElem.domain(this.codomainMinMax);
-                    break;
-                case 'month':
-                    this.codomainMinMax[0] = moment(this.codomainMinMax[0]).startOf('month').subtract(2, 'w');
-                    this.codomainMinMax[1] = moment(this.codomainMinMax[1]).endOf('month').add(2, 'w');
-                    scaleElem.domain(this.codomainMinMax);
-                    break;
-            }
+            scaleElem.domain(this.codomainMinMax);
         } else {
             scaleElem.domain(this.data.map(d => this.getXElem(d)));
         }
@@ -226,8 +231,8 @@ export abstract class BaseChart {
     }
 
 
-    private formatAxis2(scale, isBottom, type, externalFuntion=null, date_group_by=null, data_length=0){
-        let axis= isBottom? d3.axisBottom(scale): d3.axisLeft(scale) 
+    private formatAxis2(scale, isBottom, type, externalFuntion = null, date_group_by = null, data_length = 0) {
+        let axis = isBottom ? d3.axisBottom(scale) : d3.axisLeft(scale)
         switch (type) {
             case "none":
                 break;
@@ -235,27 +240,27 @@ export abstract class BaseChart {
                 switch (date_group_by) {
                     case 'day':
                         if (data_length < 5) {
-                            axis=axis.tickFormat(d3.timeFormat('%b %d')).ticks(d3.timeDay.every(1));
+                            axis = axis.tickFormat(d3.timeFormat('%b %d')).ticks(d3.timeDay.every(1));
                         } else {
-                            axis=axis.tickFormat(d3.timeFormat('%b %d'));
+                            axis = axis.tickFormat(d3.timeFormat('%b %d'));
                         }
                         break;
                     case 'week':
-                        axis=axis.tickFormat(d3.timeFormat('%b %d'));
+                        axis = axis.tickFormat(d3.timeFormat('%b %d'));
                         break;
                     case 'month':
-                        axis=axis.ticks(d3.timeMonth, 1).tickFormat(d3.timeFormat('%b-%Y'));
+                        axis = axis.ticks(d3.timeMonth, 1).tickFormat(d3.timeFormat('%b-%Y'));
                         break;
                 }
                 break;
             case "percent":
-                axis =axis.tickFormat(d3.format('.0%'))
+                axis = axis.tickFormat(d3.format('.0%'))
                 break;
             case "SI prefix":
-                axis =axis.tickFormat(d3.format('.0s'))
+                axis = axis.tickFormat(d3.format('.0s'))
                 break;
             case "duration":
-                axis =axis.tickFormat((n: number) => {
+                axis = axis.tickFormat((n: number) => {
                     return externalFuntion(n)
                 })
                 break;
@@ -265,45 +270,47 @@ export abstract class BaseChart {
         return axis
     }
 
-    protected formatAxis(){
-        const formatAxis2=this.formatAxis2
-        const prettyPrintDurationFuntion=this.prettyPrintDuration;
-        const datetimeGroupBy=this.group_by;
-        if (this.showXAxis){
+    protected formatAxis() {
+        const formatAxis2 = this.formatAxis2
+        const prettyPrintDurationFuntion = this.prettyPrintDuration;
+        const datetimeGroupBy = this.group_by;
+        const yAxis = d3.select(this.chartContainer.nativeElement)
+            .select(".axis-y");
+        const xAxis = d3.select(this.chartContainer.nativeElement)
+            .select(".axis-x");
+        if (this.typeDatetime) {
+            yAxis.attr('transform', `translate(${this.margin.left - this.barWidth * 0.8}, ${this.margin.top})`)
+        }
+        if (this.showXAxis) {
             if (this.typeDatetime && !this.horizontalBars) {
-                this.xAxis.call(formatAxis2(this.xScale, true, 'datetime',null, datetimeGroupBy, this.data.length));
-            }else if (!this.typeDatetime && !this.horizontalBars){
+                this.xAxis.call(formatAxis2(this.xScale, true, 'datetime', null, datetimeGroupBy, this.data.length));
+            } else if (!this.typeDatetime && !this.horizontalBars) {
                 this.xAxis.call(formatAxis2(this.xScale, true, 'none'));
-            }else{
+            } else {
                 this.xAxis.call(formatAxis2(this.xScale, true, this.formatValues, prettyPrintDurationFuntion));
             }
+            //this.xAxis
         }
         if (this.showYAxis) {
             if (this.typeDatetime && this.horizontalBars) {
-                this.yAxis.call(formatAxis2(this.yScale, false, 'datetime',null, datetimeGroupBy, this.data.length));
-            }else if (!this.typeDatetime && this.horizontalBars){
+                this.yAxis.call(formatAxis2(this.yScale, false, 'datetime', null, datetimeGroupBy, this.data.length));
+            } else if (!this.typeDatetime && this.horizontalBars) {
                 this.yAxis.call(formatAxis2(this.yScale, false, 'none'));//domain values
-            }else{
+            } else {
                 this.yAxis.call(formatAxis2(this.yScale, false, this.formatValues, prettyPrintDurationFuntion));
             }
         }
-        if (!this.showYAxisLine){
-            const yAxis=d3.select(this.chartContainer.nativeElement) 
-                        .select(".axis-y");
+        if (!this.showYAxisLine) {
             yAxis.select('.domain').remove() //remove axis vertical line
-            yAxis.selectAll('line').attr('x2', this.xScale(this.codomainMinMax[1])); //generate chart wide ticks
+            yAxis.selectAll('line').attr('x2', this.xScale(this.codomainMinMax[1]) + this.barWidth * 1.5); //generate chart wide ticks
             yAxis.selectAll('.tick > text')//move y text label to the left
                 .attr("dx", "2em")
                 .attr("x", "-30")
         }
-        
-
     }
 
     createChart() {
-        if (!this.showYAxis){
-            this.offsetChart=0;//remove offset if the axis is not visible 
-        }
+        this.initMargins()
         const element = this.chartContainer.nativeElement;
         this.width = element.offsetWidth - this.margin.left - this.margin.right;
         this.height = element.offsetHeight - this.margin.top - this.margin.bottom;
@@ -313,46 +320,47 @@ export abstract class BaseChart {
             .style('margin', 'auto')
             .attr('width', element.offsetWidth)
             .attr('height', element.offsetHeight);
-        
+
         let domain = this.data.map((d: any) => this.getXElem(d));
-        let codomain =  [0, d3.max(this.data, (d: any) => this.getYElem(d))];
+        let codomain = [0, d3.max(this.data, (d: any) => this.getYElem(d))];
         let xDomain, yDomain
         // define X & Y domains
-        if (!this.horizontalBars){
+        if (!this.horizontalBars) {
             xDomain = domain;
             yDomain = codomain;
-            this.xScale= this.typeDatetime ? d3.scaleTime(): d3.scaleBand().padding(0.1);
-            this.yScale= d3.scaleLinear();
-        }else{
+            this.xScale = this.typeDatetime ? d3.scaleTime() : d3.scaleBand().padding(0.1);
+            this.yScale = d3.scaleLinear();
+        } else {
             xDomain = codomain;
             yDomain = domain;
-            this.xScale= d3.scaleLinear();
-            this.yScale= this.typeDatetime ? d3.scaleTime(): d3.scaleBand().padding(0.1);
+            this.xScale = d3.scaleLinear();
+            this.yScale = this.typeDatetime ? d3.scaleTime() : d3.scaleBand().padding(0.1);
         }
-        this.xScale=this.xScale.domain(xDomain).rangeRound([0, this.width - this.legendSpace])
-        this.yScale=this.yScale.domain(yDomain).rangeRound([this.height, 0])
-        if (this.showXAxis){
-            this.xAxis = svg.append('g')
-            .attr('class', 'axis axis-x')
-            .attr('transform', `translate(${this.margin.left + this.offsetChart}, ${this.margin.top + this.height})`);
-        }
-
+        this.xScale = this.xScale.domain(xDomain)
+        this.yScale = this.yScale.domain(yDomain)
         if (this.showYAxis) {
             this.yAxis = svg.append('g')
                 .attr('class', 'axis axis-y')
-                .attr('transform', `translate(${this.margin.left+ this.offsetChart}, ${this.margin.top})`)
-        }
-        this.getDomainMinMax();
-        this.formatAxis()
-        if (this.horizontalBars){
-            this.setBarWidth(this.yScale);
-        }else{
-            this.setBarWidth(this.xScale);
+                .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
         }
 
+        if (this.showXAxis) {
+            this.xAxis = svg.append('g')
+                .attr('class', 'axis axis-x')
+                .attr('transform', `translate(${this.margin.left}, ${this.margin.top + this.height})`);
+        }
+
+        this.updateWidthAndHeight();
+        this.getDomainMinMax();
+        this.formatAxis()
+        if (this.horizontalBars) {
+            this.setBarWidth(this.yScale);
+        } else {
+            this.setBarWidth(this.xScale);
+        }
         // chart plot area
         this.chart = svg.append('g')
             .attr('class', 'chartArea')
-            .attr('transform', `translate(${this.margin.left + this.offsetChart}, ${this.margin.top})`);
+            .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`);
     }
 }
