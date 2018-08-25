@@ -1,11 +1,11 @@
 <div style="position: relative; width:inherit; height: inherit">
     <div #chart style="width:inherit; height: inherit" (mousemove)="trackMousePosition($event)"></div>
 
-    <div #tooltipElem class="tooltip-chart" style="opacity: 1; z-index: 2;" [style.left]="tooltip.left" [style.top]="tooltip.top">
-        <p style="color:gray">{{tooltip.x}}</p>
-        <p style="font-weight:bold">{{tooltip.y}}</p>
-        <p *ngIf="tooltip.z">{{tooltip.z}}</p>
-        <p *ngFor="let extra of tooltip.extra">{{extra}}</p>
+    <div #tooltipElem class="tooltip-chart" style="opacity: 1; z-index: 2;" [style.left]="configObject.tooltip.left" [style.top]="configObject.tooltip.top">
+        <p style="color:gray">{{configObject.tooltip.x}}</p>
+        <p style="font-weight:bold">{{configObject.tooltip.y}}</p>
+        <p *ngIf="configObject.tooltip.z">{{configObject.tooltip.z}}</p>
+        <p *ngFor="let extra of configObject.tooltip.extra">{{extra}}</p>
     </div>
 </div>
 

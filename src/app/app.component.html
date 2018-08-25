@@ -1,37 +1,42 @@
+
+
+
+
+
+
+
+
+
+
+<div *ngFor="let card of cards">
+    <div [ngSwitch]="card.config.type"> 
+            <div *ngSwitchCase="'bar'"> 
+                <p>Bar chart</p>
+                {{card.data | json}}
+                <app-bar-chart style="width:800px; height: 400px"
+                    *ngIf="card.data"
+                    [configObject]="card.config"
+                    [data]="card.data">
+                </app-bar-chart>
+            </div>
+            <div *ngSwitchCase="'stacked'"> 
+                <p>Stacked bar</p>
+                {{card | json}}
+                <app-stacked-bar-chart style="width:800px; height: 400px"
+                    [configObject]="card.config"
+                    [data]="card.data">
+                </app-stacked-bar-chart>
+            </div>
+        <div *ngSwitchOtherwise> 
+            <div>Card Content Here</div>
+
+        </div>
+    </div>
+</div>
+
+
 <h1>Charts</h1>
 
-<app-bar-chart style="width:800px; height: 400px"
-                *ngIf="chartData"
-                [data]="chartData"
-                [format-values]="yFormat">
-</app-bar-chart>
-
-<app-bar-chart style="width:800px; height: 700px"
-                *ngIf="chartData2"
-                [data]="chartData2"
-                [showXAxis]="false_value"
-                [color-list]="colors2"
-                [enable-tooltip]="enableTooltip"
-                [x]="x"
-                [ys]="y"
-                [percentage-values]="y"
-                [show-object-data-on-tooltip]="showExtraData"
-                [horizontalBars]="true_value">
-</app-bar-chart>
-
-<app-bar-chart style="width:800px; height: 400px" 
-             *ngIf="chartData3"
-             [data]="chartData3"
-             [type-datetime]="true_value"
-             [showXAxis]="false_value"
-             [showYAxis]="false_value"
-             [color-list]="colors"
-             [threshold-list]="thresholds"
-             [enable-tooltip]="enableTooltip"
-             [x]="x"
-             [ys]="y"
-             [show-object-data-on-tooltip]="showExtraData" >
-</app-bar-chart>
 
 <app-horizontal-bar style="width:800px; height:40px" 
                     *ngIf="horizontalBarData"
@@ -40,77 +45,11 @@
 </app-horizontal-bar>
 
 
-<app-stacked-bar-chart style="width:800px; height: 400px" 
-                        *ngIf="stackedChartData"
-                        [data]="stackedChartData"
-                        (data-click)="mostrarClick($event)"
-                        [x]="x_attr">
-</app-stacked-bar-chart>
-
-
-<app-stacked-bar-chart style="width:800px; height: 400px" 
-                        *ngIf="stackedChartData2"
-                        [data]="stackedChartData2"
-                        (data-click)="mostrarClick($event)"
-                        [x]="x_attr"
-></app-stacked-bar-chart>
-
-
-<app-stacked-bar-chart style="width:800px; height: 400px" 
-                        *ngIf="stackedChartData2"
-                        [group-by]="groupByWeek"
-                        [data]="stackedChartData2"
-                        (data-click)="mostrarClick($event)"
-                        [x]="x_attr">
-</app-stacked-bar-chart>
-
-
-<app-stacked-bar-chart style="width:800px; height: 400px"
-                        *ngIf="stackedChartData2"
-                        [fixedSize]="false_value"
-                        [group-by]="groupByMonth"
-                        [data]="stackedChartData2"
-                        (data-click)="mostrarClick($event)"
-                        [x]="x_attr">
-</app-stacked-bar-chart>
-
-
 <app-line-chart style="width:800px; height: 400px" 
                 *ngIf="stackedChartData2" 
                 [data]="stackedChartData2"
                 [x]="x_attr">
 </app-line-chart>
-
-
-<app-stacked-bar-chart style="width:800px; height: 200px" 
-                        *ngIf="stackedChartData3" 
-                        [data]="stackedChartData3"
-                        [showYAxis]="false_value" 
-                        [showLegend]="false_value"
-                        [bar-width-limits]="barWidths"
-                        [limit-x-values]="limitX"
-                        [x]="x_attr" 
-                        [ys]="y_attrs" 
-                        [show-object-data-on-tooltip]="showExtraData" 
-                        [group-elements]="false_value"
-                        [format-values]="format_percentage"
-                        [colors]="colors3">
-</app-stacked-bar-chart>
-
-<app-stacked-bar-chart style="width:800px; height: 200px" 
-                        *ngIf="stackedChartData4" 
-                        [data]="stackedChartData4"
-                        [showYAxis]="false_value"
-                        [limit-x-values]="limitX" 
-                        [showLegend]="false_value"
-                        [bar-width-limits]="barWidths"
-                        [x]="x_attr" 
-                        [ys]="y_attrs" 
-                        [show-object-data-on-tooltip]="showExtraData" 
-                        [group-elements]="false_value"
-                        [format-values]="format_percentage"
-                        [colors]="colors3">
-</app-stacked-bar-chart>
 
 <app-pie-chart style="width:800px; height: 400px" 
                 *ngIf="pieChartData"
