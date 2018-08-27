@@ -269,5 +269,23 @@ card9.config.type= 'stacked';
 </app-pie-chart>
 */
 
+
+let card10 = new CardChart('bar');
+card10.generateData = function (){
+    let data=[]
+    for (let i = 0; i < (8 + Math.floor(Math.random() * 10)); i++) {
+        data.push([
+            `Long description of Index ${i}`,
+            Math.floor(Math.random() * 100)
+        ]);
+    }
+    return data
+}
+card10.data = card10.generateData() ;
+card10.config.formatValues= 'percent';
+card10.config.type= 'bar';
+card10.config.rotateXAxisLabels= true;
+
+
 export let cardList=[card1, card2, card3, card4, card5,
-                card6, card7, card8, card9]
+                card6, card7, card8, card9, card10]

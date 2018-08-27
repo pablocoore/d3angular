@@ -13,6 +13,7 @@ import { HorizontalBarComponent } from './shared/horizontal-bar/horizontal-bar.c
 import { MainDashboardComponent } from './main-dashboard/main-dashboard.component';
 import { MatGridListModule, MatCardModule, MatMenuModule, MatIconModule, MatButtonModule } from '@angular/material';
 import { LayoutModule } from '@angular/cdk/layout';
+import { BrushableBarsComponent } from './shared/brushable-bars/brushable-bars.component';
 
 
 @NgModule({
@@ -23,7 +24,8 @@ import { LayoutModule } from '@angular/cdk/layout';
     LineChartComponent,
     PieChartComponent,
     HorizontalBarComponent,
-    MainDashboardComponent
+    MainDashboardComponent,
+    BrushableBarsComponent
   ],
   imports: [
     BrowserModule,

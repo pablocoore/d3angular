@@ -12,13 +12,8 @@ export class AppComponent implements OnInit {
     chartData: Array<any>;
     horizontalBarData = [35];
     yFormat = "percent"
-    chartData2: Array<any>;
-    chartData3: Array<any>;
 
-    stackedChartData: Array<any>;
     stackedChartData2: Array<any>;
-    stackedChartData3: Array<any>;
-    stackedChartData4: Array<any>;
 
     lineChartData: Array<any>;
     pieChartData: Array<any>;
@@ -66,33 +61,14 @@ export class AppComponent implements OnInit {
     }
 
     generateBarData() {
-        this.chartData = [];
-        this.chartData2 = [];
-        this.chartData3 = [];
+        let years: [number, number] = [1980, 2018]
 
-        for (let i = 0; i < (8 + Math.floor(Math.random() * 10)); i++) {
-            this.chartData.push([
-                `Index ${i}`,
-                Math.floor(Math.random() * 100)
-            ]);
-        }
-
-        for (let i = 0; i < (8 + Math.floor(Math.random() * 17)); i++) {
-            this.chartData2.push({
-                x: `Index ${i}`,
-                y: Math.floor(Math.random() * 100),
-                price: '$' + (150 + Math.floor(Math.random() * 100)),
-                cost: '$' + (20 + Math.floor(Math.random() * 120))
-            }
-            );
-        }
-
-
-        for (let i = 0; i < (8 + Math.floor(Math.random() * 40)); i++) {
-            this.chartData3.push(
+        this.chartData =[]
+        for (let i = 1980+Math.floor(Math.random() * 10); i < 2018-Math.floor(Math.random() * 5); i++) {
+            this.chartData.push(
                 {
-                    "x": moment().add(i, 'd').toDate(),
-                    "y": Math.floor(Math.random() * 100)
+                    year: i,
+                    value: Math.floor(Math.random() * 200)
                 },
             );
         }
@@ -103,20 +79,7 @@ export class AppComponent implements OnInit {
     }
 
     generateStackedBarData() {
-        this.stackedChartData = [];
         this.stackedChartData2 = [];
-        this.stackedChartData3 = [];
-        this.stackedChartData4 = [];
-
-        for (let i = 0; i < (8 + Math.floor(Math.random() * 40)); i++) {
-            this.stackedChartData.push(
-                {
-                    "fecha": moment().add(i, 'd').toDate(),
-                    "JORGE MARTINEZ": Math.floor(Math.random() * 2),
-                    "DANIEL ANDRADE": Math.floor(Math.random() * 8)
-                },
-            );
-        }
 
         for (let i = 0; i < (40 + Math.floor(Math.random() * 70)); i++) {
             this.stackedChartData2.push(
@@ -132,37 +95,6 @@ export class AppComponent implements OnInit {
             );
         }
 
-        for (let i = 0; i < (10 + Math.floor(Math.random() * 15)); i++) {
-            let empty_chunk = Math.floor(Math.random() * 10)
-            let total_hours = Math.floor(Math.random() * 40);
-            let invoiced_hours = Math.floor(Math.random() * total_hours);
-            let percentage = total_hours > 0 ? Math.floor(invoiced_hours / total_hours * 100) : 0;
-            this.stackedChartData3.push(
-                {
-                    "fecha": moment().add((i + empty_chunk) * 7, 'd').toDate(),
-                    "percentage_completed": percentage,
-                    "percentage_missing": percentage < 100 ? 100 - percentage : 0,
-                    "Total hours": total_hours,
-                    "Invoiced hours": invoiced_hours,
-                },
-            );
-        }
-
-        for (let i = 0; i < (10 + Math.floor(Math.random() * 20)); i++) {
-            let empty_chunk = Math.floor(Math.random() * 15)
-            let total_hours = Math.floor(Math.random() * 40);
-            let invoiced_hours = Math.floor(Math.random() * total_hours);
-            let percentage = total_hours > 0 ? Math.floor(invoiced_hours / total_hours * 100) : 0;
-            this.stackedChartData4.push(
-                {
-                    "fecha": moment().add((i + empty_chunk) * 7, 'd').toDate(),
-                    "percentage_completed": percentage,
-                    "percentage_missing": percentage < 100 ? 100 - percentage : 0,
-                    "Total hours": total_hours,
-                    "Invoiced hours": invoiced_hours,
-                },
-            );
-        }
         this.lineChartData = this.stackedChartData2;
     }
     generatePieChartData() {

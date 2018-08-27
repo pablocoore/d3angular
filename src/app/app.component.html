@@ -7,7 +7,6 @@
 
 
 
-
 <div *ngFor="let card of cards">
     <div [ngSwitch]="card.config.type"> 
             <div *ngSwitchCase="'bar'"> 
@@ -56,5 +55,7 @@
                 [data]="pieChartData"
                 (data-click)="mostrarClick($event)">
 </app-pie-chart>
-
-
+{{chartData|json}}
+<app-brushable-bars style="width:840px; height: 260px; padding:5px"
+                    [data]="chartData"
+                     (selection)="mostrarClick($event)"></app-brushable-bars>

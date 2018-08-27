@@ -64,6 +64,9 @@ export abstract class BaseChart {
                 this.configObject.margin.right = this.configObject.margin.right + this.configObject.barWidthLimits[1] * 0.8
             }
         }
+        if (this.configObject.rotateXAxisLabels){
+            this.configObject.margin.bottom = Math.max(this.configObject.margin.left, 65)
+        }
     }
 
     normalizeValues(maxValue) {
@@ -303,6 +306,14 @@ export abstract class BaseChart {
                 .attr("dx", "2em")
                 .attr("x", "-30")
         }
+        if(this.configObject.rotateXAxisLabels){
+            xAxis.selectAll("text")
+            .attr("y", 10)
+            .attr("x", 0)
+            .attr("dy", ".35em")
+            .attr("transform", "rotate(35)")
+            .style("text-anchor", "start");
+        }
     }
 
     createChart() {
@@ -312,8 +323,6 @@ export abstract class BaseChart {
         this.height = element.offsetHeight - this.configObject.margin.top - this.configObject.margin.bottom;
         
         const svg = d3.select(element).append('svg')
-            .style('display', 'block')
-            .style('margin', 'auto')
             .attr('width', element.offsetWidth)
             .attr('height', element.offsetHeight);
 

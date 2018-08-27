@@ -1,4 +1,4 @@
-<div style="position: relative; width:inherit; height: inherit">
+<div style="position: relative; width:inherit; height: inherit; display: block; margin: auto">
     <div #chart style="width:inherit; height: inherit" (mousemove)="trackMousePosition($event)"></div>
 
     <div #tooltipElem class="tooltip-chart" style="opacity: 1; z-index: 2;" [style.left]="configObject.tooltip.left" [style.top]="configObject.tooltip.top">

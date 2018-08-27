@@ -105,6 +105,20 @@ export class StackedBarChartComponent extends BaseChart implements OnInit, OnCha
             this.updateChart();
         }
     }
+    public removeHighlight(){
+        this.chart.selectAll(".legend-color")
+            .transition()
+            .duration(this.configObject.transitionDuration)
+            .style('fill', (d, i) => this.colorScale(i))
+        this.chart.selectAll(".legend-text")
+            .transition()
+            .duration(this.configObject.transitionDuration)
+            .style('fill', (d, i) => '#000000')
+        this.chart.selectAll('.barGroup')
+            .transition()
+            .duration(this.configObject.transitionDuration)
+            .style('fill', (d, i) => this.colorScale(i))
+    }
 
     public highLightSelectedGroup(groupId) {
         this.chart.selectAll(".barGroup")
@@ -120,6 +134,29 @@ export class StackedBarChartComponent extends BaseChart implements OnInit, OnCha
                 }
             });
 
+        this.chart.selectAll(".legend-text")
+            //      .filter((d,j)=> j != groupId)
+            .transition()
+            .duration(this.configObject.transitionDuration)
+            .style('fill', (d, i) => {
+                if (i != groupId) {
+                    return '#dfdfdf'
+                } else {
+                    return '#000000'
+                }
+            });
+        
+        this.chart.selectAll(".legend-color")
+            //      .filter((d,j)=> j != groupId)
+            .transition()
+            .duration(this.configObject.transitionDuration)
+            .style('fill', (d, i) => {
+                if (i != groupId) {
+                    return '#dfdfdf'
+                } else {
+                    return this.colorScale(i)
+                }
+            });
         //.style('opacity', 0.5);
     }
 
@@ -180,28 +217,32 @@ export class StackedBarChartComponent extends BaseChart implements OnInit, OnCha
                 .attr('class', 'legend')
                 .attr('font-family', 'sans-serif')
                 .attr('font-size', 10)
-                .attr('text-anchor', 'end')
                 .selectAll('g')
                 .data(dataToDraw)
                 .enter().append('g')
+                .attr('class', 'legend-label')
                 .attr('transform', (d, i) => 'translate(0,' + i * 20 + ')');
 
             legend.append('rect')
-                .attr('x', this.width + this.configObject.margin.left * 0.7 - 19)
-                .attr('width', 19)
-                .attr('height', 19)
+                .attr('x', this.xScale(this.codomainMinMax[1])+this.barWidth/2+10)
+                .attr('class', 'legend-color')
+                .attr('width', 12)
+                .attr('height', 12)
                 .attr('fill', (d, i) => this.colorScale(i));
 
             legend.append('text')
-                .attr('x', this.width + this.configObject.margin.left * 0.7 - 24)
-                .attr('y', 9.5)
+                .attr('x', this.xScale(this.codomainMinMax[1])+this.barWidth/2+10+15)
+                .attr('class', 'legend-text')
+                .attr('y', 7)
                 .attr('dy', '0.32em')
                 .text(d => d.key);
-            this.chart.selectAll('.legend')
+            this.chart.selectAll('.legend-label')
                 .on('mouseenter', (d, i) => {
                     this.highLightSelectedGroup(i);
                     this.configObject.tooltip.y = d ? d.key : "";
-                }).on('mouseout', () => this.chart.selectAll(".barGroup").transition().duration(this.configObject.transitionDuration).style('opacity', 1));
+                }).on('mouseout', () => {
+                    this.removeHighlight()
+                });
         }
     }
 
@@ -251,8 +292,7 @@ export class StackedBarChartComponent extends BaseChart implements OnInit, OnCha
                 .on('mouseenter', (d, i) => {
                     this.highLightSelectedGroup(i);
                     this.configObject.tooltip.y = d.key;
-                }).on('mouseout', () => this.chart.selectAll('.barGroup').transition().duration(this.configObject.transitionDuration)
-                    .style('fill', (d, i) => this.colorScale(i)));
+                }).on('mouseout', () => this.removeHighlight());
             this.chart.selectAll('.barGroup').selectAll('.bar')
                 .on('mousemove', (d) => {
                     tooltip.transition().duration(this.configObject.transitionDuration).style('opacity', 0.95);

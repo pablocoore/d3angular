@@ -31,7 +31,8 @@ export class ChartConfig {
     enableTooltips= true;
     showObjectDataOnTooltip= false;
     transitionDuration= 200;
-
+    rotateXAxisLabels= false;
+    
     //BAR CHART CUSTOM CONFIG
     thresholdList: number[] = [];//ordered list of thresholds: [5.4, 27, 45]
 

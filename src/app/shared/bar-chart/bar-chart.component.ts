@@ -86,6 +86,7 @@ export class BarChartComponent extends BaseChart implements OnInit, OnChanges {
             .on('mousemove', (d) => {
                 tooltip.transition().duration(this.configObject.transitionDuration).style('opacity', 0.95);
                 const xPos = this.mouse.x + 60;
+
                 this.configObject.tooltip.left = '' + xPos + 'px';
                 this.configObject.tooltip.top = '' + this.mouse.y + 'px';
                 this.ref.markForCheck();
