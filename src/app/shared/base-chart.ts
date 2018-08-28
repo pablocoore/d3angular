@@ -70,19 +70,21 @@ export abstract class BaseChart {
     }
 
     normalizeValues(maxValue) {
-        if (this.data.length > 0) {
-            this.data = this.data.map(elem => {
-                if (this.configObject.ys.length > 0) {
-                    this.configObject.ys.forEach(y => {
-                        if (y != '') {
-                            elem[y] = elem[y] / (maxValue)
-                        }
-                    })
-                } else {
-                    elem[1] = elem[1] / (maxValue);
-                }
-                return elem;
-            })
+        if (this.configObject.type==='bar'){
+            if (this.data.length > 0) {
+                this.data = this.data.map(elem => {
+                    if (this.configObject.ys.length > 0) {
+                        this.configObject.ys.forEach(y => {
+                            if (y != '') {
+                                elem[y] = elem[y] / (maxValue)
+                            }
+                        })
+                    } else {
+                        elem[1] = elem[1] / (maxValue);
+                    }
+                    return elem;
+                })
+            }            
         }
     }
 
@@ -317,6 +319,8 @@ export abstract class BaseChart {
     }
 
     createChart() {
+        this.configObject.colorList.map(colorElem => d3.color(colorElem))
+
         this.initMargins()
         const element = this.chartContainer.nativeElement;
         this.width = element.offsetWidth - this.configObject.margin.left - this.configObject.margin.right;
