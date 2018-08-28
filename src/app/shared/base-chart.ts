@@ -31,7 +31,7 @@ export abstract class BaseChart {
     @Output("data-click") dataClick = new EventEmitter();
 
     @Input() protected data = [];
-    @Input() protected configObject: ChartConfig;
+    @Input() public configObject: ChartConfig;
 
     chart: any;
     width = 0;
