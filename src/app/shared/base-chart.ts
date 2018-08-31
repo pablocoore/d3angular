@@ -46,26 +46,27 @@ export abstract class BaseChart {
     horizontalTickN = 0;
     legendSpace = 0;
     codomainMinMax: [any, any];
-
+    margin: Margin;
     public mouse = { x: 0, y: 0 };
     protected keys = [];
 
     initMargins() {
+        this.margin=Object.assign({},this.configObject.margin)
         if (this.configObject.horizontalBars || (this.configObject.typeDatetime && this.configObject.showYAxis)) {
-            this.configObject.margin.left = Math.max(this.configObject.margin.left, 85)
+            this.margin.left = Math.max(this.margin.left, 85)
         } else if (this.configObject.showYAxis) {
-            this.configObject.margin.left = Math.max(this.configObject.margin.left, 40)
+            this.margin.left = Math.max(this.margin.left, 40)
         }
 
         if (this.configObject.typeDatetime) {
             if (this.configObject.horizontalBars) {
-                this.configObject.margin.bottom = this.configObject.margin.bottom + this.configObject.barWidthLimits[1] * 0.8
+                this.margin.bottom = this.margin.bottom + this.configObject.barWidthLimits[1] * 0.8
             } else {
-                this.configObject.margin.right = this.configObject.margin.right + this.configObject.barWidthLimits[1] * 0.8
+                this.margin.right = this.margin.right + this.configObject.barWidthLimits[1] * 0.8
             }
         }
         if (this.configObject.rotateXAxisLabels){
-            this.configObject.margin.bottom = Math.max(this.configObject.margin.left, 65)
+            this.margin.bottom = Math.max(this.margin.left, 65)
         }
     }
 
@@ -85,6 +86,8 @@ export abstract class BaseChart {
                     return elem;
                 })
             }            
+        }else{
+           console.warn("Not implemented")
         }
     }
 
@@ -110,6 +113,20 @@ export abstract class BaseChart {
         }
     }
 
+    sortAndFilterData(){
+        this.data.sort((a,b)=>{
+            if (a[this.configObject.x]<b[this.configObject.x]) {
+                return -1;
+            }
+            if (a[this.configObject.x]>b[this.configObject.x]) {
+                return 1;
+            }
+            return 0;
+        })
+        if (this.configObject.limitXValues!==undefined && this.configObject.limitXValues.length===2){
+            this.data=this.data.filter(elem=> this.configObject.limitXValues[0]<=elem[this.configObject.x] && elem[this.configObject.x]<=this.configObject.limitXValues[1])
+        }
+    }
     prettyPrintDuration(duration) {
         let textToDisplay = "";
         const durationHS = moment.duration(duration, 'h');
@@ -171,8 +188,10 @@ export abstract class BaseChart {
 
     prettyPrint(value, key = null) {
         let iniString = '';
-        if (key != null && this.configObject.percentageValues.indexOf(key) != -1) {
+        if ((key != null && this.configObject.percentageValues.indexOf(key) != -1)||
+            ((key === null || key === undefined) && this.configObject.formatValues === 'percent')) {
             iniString = '% ';
+            value=value*100
         }
         return iniString + (this.isFloat(value) ? value.toFixed(2) : value);
     }
@@ -180,8 +199,8 @@ export abstract class BaseChart {
     updateWidthAndHeight() {
         // if (this.typeDatetime) return;
         if (!this.configObject.fixedSize) {
-            let chartWidthArea = this.chartContainer.nativeElement.offsetWidth - this.configObject.margin.left - this.configObject.margin.right;
-            let chartHeigthArea = this.chartContainer.nativeElement.offsetHeight - this.configObject.margin.top - this.configObject.margin.bottom;
+            let chartWidthArea = this.chartContainer.nativeElement.offsetWidth - this.margin.left - this.margin.right;
+            let chartHeigthArea = this.chartContainer.nativeElement.offsetHeight - this.margin.top - this.margin.bottom;
             this.height = chartHeigthArea;
             this.width = chartWidthArea;
             if (this.configObject.horizontalBars) {
@@ -194,8 +213,8 @@ export abstract class BaseChart {
         }
 
         d3.select(this.chartContainer.nativeElement).select('svg')
-            .attr('width', this.width + this.configObject.margin.left + this.configObject.margin.right)
-            .attr('height', this.height + this.configObject.margin.bottom + this.configObject.margin.top);
+            .attr('width', this.width + this.margin.left + this.margin.right)
+            .attr('height', this.height + this.margin.bottom + this.margin.top);
 
         this.yScale.rangeRound([this.height, 0])
         this.xScale.rangeRound([0, this.width - this.legendSpace])
@@ -211,6 +230,10 @@ export abstract class BaseChart {
     }
 
     updateScalesDomain() {
+        this.configObject.tooltip.x = ""
+        this.configObject.tooltip.y = ""
+        this.configObject.tooltip.z = ""
+        this.configObject.tooltip.extra = [];
         let scaleElem, scaleElem2, axisElem
         if (this.configObject.horizontalBars) {
             scaleElem = this.yScale.domain(this.codomainMinMax);
@@ -227,7 +250,11 @@ export abstract class BaseChart {
             scaleElem.domain(this.data.map(d => this.getXElem(d)));
         }
         this.setBarWidth(scaleElem);
-        scaleElem2.domain([0, d3.max(this.data, (d: any) => this.getYElem(d))]).nice();
+        if (this.configObject.formatValues === 'percent'){
+            scaleElem2.domain([0, 1]);
+        }else{
+            scaleElem2.domain([0, d3.max(this.data, (d: any) => this.getYElem(d))]).nice();
+        }
         return this.codomainMinMax;
     }
 
@@ -280,7 +307,7 @@ export abstract class BaseChart {
         const xAxis = d3.select(this.chartContainer.nativeElement)
             .select(".axis-x");
         if (this.configObject.typeDatetime) {
-            yAxis.attr('transform', `translate(${this.configObject.margin.left - this.barWidth * 0.8}, ${this.configObject.margin.top})`)
+            yAxis.attr('transform', `translate(${this.margin.left - this.barWidth * 0.8}, ${this.margin.top})`)
         }
         if (this.configObject.showXAxis) {
             if (this.configObject.typeDatetime && !this.configObject.horizontalBars) {
@@ -323,8 +350,8 @@ export abstract class BaseChart {
 
         this.initMargins()
         const element = this.chartContainer.nativeElement;
-        this.width = element.offsetWidth - this.configObject.margin.left - this.configObject.margin.right;
-        this.height = element.offsetHeight - this.configObject.margin.top - this.configObject.margin.bottom;
+        this.width = element.offsetWidth - this.margin.left - this.margin.right;
+        this.height = element.offsetHeight - this.margin.top - this.margin.bottom;
         
         const svg = d3.select(element).append('svg')
             .attr('width', element.offsetWidth)
@@ -346,30 +373,30 @@ export abstract class BaseChart {
             this.yScale = this.configObject.typeDatetime ? d3.scaleTime() : d3.scaleBand().padding(0.1);
         }
         this.xScale = this.xScale.domain(xDomain)
-        this.yScale = this.yScale.domain(yDomain)
+        //this.yScale = this.yScale.domain(yDomain)
         if (this.configObject.showYAxis) {
             this.yAxis = svg.append('g')
                 .attr('class', 'axis axis-y')
-                .attr('transform', `translate(${this.configObject.margin.left}, ${this.configObject.margin.top})`)
+                .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
         }
 
         if (this.configObject.showXAxis) {
             this.xAxis = svg.append('g')
                 .attr('class', 'axis axis-x')
-                .attr('transform', `translate(${this.configObject.margin.left}, ${this.configObject.margin.top + this.height})`);
+                .attr('transform', `translate(${this.margin.left}, ${this.margin.top + this.height})`);
         }
 
         this.updateWidthAndHeight();
         this.getDomainMinMax();
         this.formatAxis()
-        if (this.configObject.horizontalBars) {
+        /*if (this.configObject.horizontalBars) {
             this.setBarWidth(this.yScale);
         } else {
             this.setBarWidth(this.xScale);
-        }
+        }*/
         // chart plot area
         this.chart = svg.append('g')
             .attr('class', 'chartArea')
-            .attr('transform', `translate(${this.configObject.margin.left}, ${this.configObject.margin.top})`);
+            .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`);
     }
 }

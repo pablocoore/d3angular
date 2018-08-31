@@ -20,7 +20,7 @@ export class BarChartComponent extends BaseChart implements OnInit, OnChanges {
         //set n of horizontal ticks
         this.horizontalTickN = Math.min(this.data.length, 20);
         //normalize data
-        if (this.configObject.formatValues == 'percent') {
+        if (this.configObject.formatValues==='percent') {
             let max_value = d3.max(this.data, (d: any) => this.getYElem(d))
             if (max_value > 1) {
                 this.normalizeValues(max_value);
@@ -38,12 +38,13 @@ export class BarChartComponent extends BaseChart implements OnInit, OnChanges {
             //set n of horizontal ticks
             this.horizontalTickN = Math.min(this.data.length, 20);
             //normalize data
-            if (this.configObject.formatValues == 'percent') {
+            if (this.configObject.formatValues === 'percent') {
                 let max_value = d3.max(this.data, (d: any) => this.getYElem(d))
                 if (max_value > 1) {
                     this.normalizeValues(max_value);
                 }
             }
+            this.sortAndFilterData();
             this.updateChart();
         }
     }

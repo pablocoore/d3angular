@@ -7,7 +7,7 @@ import { CardChart } from './card-chart.model';
 let card1 = new CardChart('bar');
 card1.generateData = function (){
     let data=[]
-    for (let i = 0; i < (8 + Math.floor(Math.random() * 10)); i++) {
+    for (let i = 0; i < (8 + Math.floor(Math.random() * 20)); i++) {
         data.push([
             `Index ${i}`,
             Math.floor(Math.random() * 100)
@@ -19,8 +19,7 @@ card1.data = card1.generateData() ;
 card1.config.formatValues= 'percent';
 card1.config.type= 'bar';
 
-
-
+//HORIZONTAL BAR
 let card2 = new CardChart('bar');
 card2.generateData = function (){
     let data=[]
@@ -48,7 +47,6 @@ card2.config.type= 'bar';
 
 
 
-//HORIZONTAL BAR
 let card3 = new CardChart('bar');
 card3.generateData = function (){
     let data=[]
@@ -56,7 +54,7 @@ card3.generateData = function (){
         data.push(
             {
                 "x": moment().add(i, 'd').toDate(),
-                "y": Math.floor(Math.random() * 100)
+                "y": Math.random()
             },
         );
     }
@@ -64,14 +62,16 @@ card3.generateData = function (){
 }
 //height 700px
 card3.data = card3.generateData() ;
+card3.config.percentageValues=['y']
+card3.config.formatValues = 'percent'
 card3.config.showXAxis=false
-card3.config.showYAxis=false
+card3.config.showYAxis=true
 card3.config.colorList=['#dc3545', '#28a745']
 card3.config.x='x'
 card3.config.ys=['y']
 card3.config.showObjectDataOnTooltip=true
 card3.config.type= 'bar';
-card3.config.thresholdList= [50];
+card3.config.thresholdList= [0.5];
 card3.config.enableTooltips= true;
 card3.config.typeDatetime= true;
 

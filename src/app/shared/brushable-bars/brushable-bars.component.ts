@@ -180,7 +180,6 @@ export class BrushableBarsComponent implements OnInit, OnChanges, OnDestroy {
         this.gBrush=this.gBrush.enter()
                     .append('g')
                     .attr('class', 'gBrush');  
-
         this.gBrush.call(this.brush(this))
             .call(this.brush(this).move, [0, this.width])
         // Custom handlers

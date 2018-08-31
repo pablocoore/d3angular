@@ -29,13 +29,6 @@ var locale = {
 };
 d3.timeFormatDefaultLocale(locale);
 
-export interface Margin {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-}
-
 @Component({
     selector: 'app-stacked-bar-chart',
     templateUrl: './stacked-bar-chart.component.html',
@@ -65,12 +58,12 @@ export class StackedBarChartComponent extends BaseChart implements OnInit, OnCha
             } else {
 
             }
-            if (this.configObject.formatValues == 'percentage') {
-                let max_value = d3.max(this.data, (d: any) => 2/*this.getYElem(d)*/)
+            /*if (this.configObject.formatValues == 'percentage') {
+                let max_value = d3.max(this.data, (d: any) => 2)
                 if (max_value > 1) {
                     this.normalizeValues(max_value);
                 }
-            }
+            }*/
             this.updateChart();
         }
     }
@@ -93,15 +86,16 @@ export class StackedBarChartComponent extends BaseChart implements OnInit, OnCha
         });
         this.configObject.showLegend ? this.legendSpace = 75 : this.legendSpace = 0;
         //this.setBarWidth();
+        this.sortAndFilterData();
 
         if (this.chart) {
             this.horizontalTickN = Math.min(this.data.length, 20);
-            if (this.configObject.formatValues == 'percent') {
-                let max_value = d3.max(this.data, (d: any) => 2/*this.getYElem(d)*/)
+            /*if (this.configObject.formatValues == 'percent') {
+                let max_value = d3.max(this.data, (d: any) => 2)
                 if (max_value > 1) {
                     this.normalizeValues(max_value);
                 }
-            }
+            }*/
             this.updateChart();
         }
     }

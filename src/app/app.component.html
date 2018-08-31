@@ -20,7 +20,6 @@
             </div>
             <div *ngSwitchCase="'stacked'"> 
                 <p>Stacked bar</p>
-                {{card | json}}
                 <app-stacked-bar-chart style="width:800px; height: 400px"
                     [configObject]="card.config"
                     [data]="card.data">
@@ -55,7 +54,12 @@
                 [data]="pieChartData"
                 (data-click)="mostrarClick($event)">
 </app-pie-chart>
-{{chartData|json}}
+
 <app-brushable-bars style="width:840px; height: 260px; padding:5px"
                     [data]="chartData"
                      (selection)="mostrarClick($event)"></app-brushable-bars>
+
+<app-stacked-bar-chart *ngFor="let card of cards" style="width:300px; height: 80px"
+    [configObject]="cards[8].config"
+    [data]="cards[8].data">
+</app-stacked-bar-chart>                     

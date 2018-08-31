@@ -53,6 +53,7 @@ export class AppComponent implements OnInit {
             this.generateBarData();
             this.generateStackedBarData();
             this.generatePieChartData();
+            this.cards.forEach(elem=> elem.data=elem.generateData())
         }, 10000);
 
         setTimeout(() => {
